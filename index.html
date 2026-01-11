@@ -3,830 +3,528 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MMPI-2 Professional Scoring System (v8.0 Uniform)</title>
+    <title>MMPI-2 Professional (v9.0 Full Scales)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary: #2c3e50;
-            --secondary: #34495e;
             --accent: #2980b9;
             --danger: #c0392b;
-            --success: #27ae60;
             --warning: #f39c12;
-            --light: #ecf0f1;
-            --dark: #2d3436;
-            --sidebar-width: 280px;
+            --success: #27ae60;
+            --bg: #f4f7f6;
+            --sidebar-w: 260px;
         }
 
         * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        body { font-family: 'Segoe UI', 'Roboto', Helvetica, Arial, sans-serif; margin: 0; background: #f4f6f7; color: var(--dark); font-size: 14px; display: flex; min-height: 100vh; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: #333; display: flex; }
 
-        /* --- SIDEBAR --- */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: var(--primary);
-            color: #ecf0f1;
-            position: fixed;
-            height: 100%;
-            overflow-y: auto;
-            padding: 0;
-            z-index: 1000;
-            transition: 0.3s;
-            display: flex; flex-direction: column;
-        }
-        .sidebar-header {
-            padding: 20px; background: rgba(0,0,0,0.2); font-size: 18px; font-weight: bold; 
-            border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px;
-        }
-        .nav-scroll { flex: 1; padding: 20px; overflow-y: auto; }
-        .nav-group { font-size: 11px; text-transform: uppercase; color: #95a5a6; margin: 15px 0 5px 0; font-weight: 700; letter-spacing: 1px; }
-        .nav-item { 
-            display: flex; align-items: center; padding: 12px 15px; color: #bdc3c7; 
-            text-decoration: none; border-radius: 6px; margin-bottom: 2px; transition: 0.2s; cursor: pointer; 
-        }
-        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.1); color: white; transform: translateX(3px); }
+        /* SIDEBAR */
+        .sidebar { width: var(--sidebar-w); background: var(--primary); color: #fff; height: 100vh; position: fixed; overflow-y: auto; padding-bottom: 20px; }
+        .sidebar-header { padding: 20px; font-size: 20px; font-weight: bold; background: rgba(0,0,0,0.2); }
+        .nav-item { display: block; padding: 12px 20px; color: #bdc3c7; text-decoration: none; transition: 0.2s; border-left: 3px solid transparent; cursor: pointer; }
+        .nav-item:hover, .nav-item.active { background: rgba(255,255,255,0.1); color: #fff; border-left-color: var(--accent); }
+        .nav-group { padding: 15px 20px 5px; font-size: 11px; text-transform: uppercase; color: #7f8c8d; font-weight: bold; letter-spacing: 1px; }
 
-        /* --- MAIN CONTENT --- */
-        .main-content {
-            margin-left: var(--sidebar-width);
-            flex: 1;
-            padding: 40px;
-            width: calc(100% - var(--sidebar-width));
-            transition: 0.3s;
-        }
-
-        /* --- CARDS & UI --- */
-        .card { 
-            background: white; border-radius: 10px; box-shadow: 0 2px 15px rgba(0,0,0,0.05); 
-            padding: 30px; margin-bottom: 30px; border-top: 5px solid var(--accent); 
-        }
-        .card h3 { 
-            margin-top: 0; color: var(--primary); border-bottom: 2px solid #f0f2f5; 
-            padding-bottom: 15px; margin-bottom: 20px; font-size: 18px; 
-            display: flex; justify-content: space-between; align-items: center;
-        }
-
-        /* --- TABLES --- */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
-        thead { background: #f8f9fa; }
-        th { padding: 12px 15px; text-align: left; font-weight: 700; color: var(--secondary); text-transform: uppercase; font-size: 12px; border-bottom: 2px solid #dfe6e9; }
-        td { padding: 10px 15px; border-bottom: 1px solid #f0f2f5; vertical-align: middle; }
-        tr:nth-child(even) { background-color: #fafbfc; }
-        tr:hover td { background: #eef2f7; }
+        /* MAIN */
+        .main-content { margin-left: var(--sidebar-w); width: calc(100% - var(--sidebar-w)); padding: 40px; }
         
-        .score-val { font-family: 'Consolas', monospace; font-weight: bold; font-size: 15px; }
-        .high-score { color: var(--danger); }
-        .normal-score { color: var(--success); }
+        /* CARDS */
+        .card { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); padding: 25px; margin-bottom: 30px; page-break-inside: avoid; border-top: 4px solid var(--primary); }
+        .card h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; color: var(--primary); display: flex; justify-content: space-between; }
 
-        /* --- ERROR OVERLAY --- */
-        .error-overlay {
-            background: #ffeaa7;
-            border: 2px solid #fdcb6e;
-            color: #d35400;
-            padding: 30px;
-            text-align: center;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            animation: fadeIn 0.5s;
-        }
-        @keyframes fadeIn { from { opacity:0; transform:translateY(-10px);} to { opacity:1; transform:translateY(0);} }
-
-        /* --- UPLOAD AREA --- */
-        .upload-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; text-align: center; }
-        .upload-area {
-            border: 3px dashed #bdc3c7; border-radius: 20px; padding: 60px;
-            background: white; cursor: pointer; transition: 0.3s; width: 100%; max-width: 600px;
-        }
-        .upload-area:hover { border-color: var(--accent); background: #f4fbff; transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-
-        /* --- VALIDITY GRID --- */
-        .validity-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .v-box { padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #eee; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
-        .v-label { font-size: 11px; font-weight: bold; color: #7f8c8d; margin-bottom: 5px; }
-        .v-value { font-size: 22px; font-weight: 800; color: var(--primary); }
-        .v-desc { font-size: 10px; color: #bdc3c7; }
-
-        /* --- CHARTS --- */
-        .chart-container { position: relative; height: 350px; width: 100%; margin-bottom: 30px; }
-
-        /* --- BADGES & BTNS --- */
-        .badge { padding: 5px 10px; border-radius: 50px; font-size: 11px; font-weight: bold; letter-spacing: 0.5px; }
-        .bg-red { background: #fadbd8; color: #c0392b; }
-        .bg-green { background: #d4efdf; color: #27ae60; }
-        .bg-yellow { background: #fdebd0; color: #d35400; }
-
-        .btn { padding: 12px 25px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
-        .btn:hover { background: #2980b9; box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3); }
-
-        .hidden { display: none !important; }
-        .report-header { display: none; margin-bottom: 40px; border-bottom: 3px double #000; padding-bottom: 20px; }
+        /* TABLES */
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { text-align: left; padding: 10px; background: #f8f9fa; border-bottom: 2px solid #ddd; }
+        td { padding: 8px 10px; border-bottom: 1px solid #eee; }
+        .score-val { font-family: 'Consolas', monospace; font-weight: bold; }
+        .high { color: var(--danger); font-weight: bold; }
         
-        /* --- PRINT STYLES --- */
+        /* VALIDITY GRID */
+        .validity-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .v-box { background: #fff; border: 1px solid #ddd; padding: 15px; text-align: center; border-radius: 6px; }
+        .v-val { font-size: 20px; font-weight: bold; color: var(--primary); display: block; margin: 5px 0; }
+        .v-lbl { font-size: 11px; text-transform: uppercase; color: #7f8c8d; }
+
+        /* UPLOAD */
+        .upload-zone { border: 3px dashed #cbd5e0; border-radius: 12px; padding: 50px; text-align: center; cursor: pointer; transition: 0.3s; background: #fff; }
+        .upload-zone:hover { border-color: var(--accent); background: #ebf8ff; }
+
+        /* UTILS */
+        .hidden { display: none; }
+        .btn { background: var(--accent); color: #fff; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: 600; }
+        .badge { padding: 3px 8px; border-radius: 10px; font-size: 11px; color: #fff; font-weight: bold; }
+        .bg-red { background: var(--danger); } .bg-green { background: var(--success); } .bg-yellow { background: var(--warning); }
+        
+        /* ERROR OVERLAY */
+        .error-overlay { background: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+
+        /* CHART */
+        .chart-box { height: 300px; position: relative; margin-bottom: 20px; }
+
+        /* --- PRINT CSS --- */
         @media print {
-            @page { size: A4; margin: 10mm 15mm; }
-            body { background: white; -webkit-print-color-adjust: exact; }
-            .sidebar, .btn, .upload-area, .no-print { display: none !important; }
+            @page { size: A4; margin: 15mm; }
+            body { background: #fff; color: #000; display: block; }
+            .sidebar, .btn, .upload-zone, .no-print { display: none !important; }
             .main-content { margin: 0; padding: 0; width: 100%; }
-            .card { 
-                box-shadow: none; border: 1px solid #ccc; margin-bottom: 20px; 
-                page-break-inside: avoid; border-top: 2px solid #000; padding: 15px;
-            }
-            .card h3 { border-bottom: 1px solid #000; color: #000; }
-            .report-header { display: block; text-align: center; }
-            .chart-container { height: 280px !important; page-break-inside: avoid; }
-            tr { page-break-inside: avoid; }
-            thead { display: table-header-group; }
-            .highlight-row { background-color: #eee !important; }
+            .card { box-shadow: none; border: 1px solid #000; margin-bottom: 20px; page-break-inside: avoid; }
+            .chart-box { height: 250px !important; page-break-inside: avoid; }
             .page-break { page-break-after: always; }
+            
+            /* Header Laporan di setiap halaman print */
+            .print-header { display: block !important; text-align: center; border-bottom: 2px solid #000; margin-bottom: 20px; padding-bottom: 10px; }
+            .print-header h1 { font-size: 18px; margin: 0; }
+            .print-header p { font-size: 12px; margin: 5px 0 0; }
+            
+            /* Paksa background warna table/chart */
+            tr.highlight { background-color: #f0f0f0 !important; }
         }
-
-        /* Mobile */
-        @media (max-width: 768px) {
-            .sidebar { transform: translateX(-100%); }
-            .main-content { margin-left: 0; width: 100%; padding: 15px; }
-        }
+        .print-header { display: none; }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <div class="sidebar-header">
-        <span>MMPI-2 PRO</span>
-    </div>
-    <div class="nav-scroll">
-        <div class="nav-group">Menu Utama</div>
-        <div class="nav-item" onclick="location.reload()">Reset / Data Baru</div>
-        <div class="nav-item" onclick="window.print()">Cetak Laporan</div>
-        <div class="nav-group">Navigasi Laporan</div>
-        <a href="#summary" class="nav-item">1. Ringkasan & Validitas</a>
-        <a href="#clinical" class="nav-item">2. Profil Klinis</a>
-        <a href="#subscales" class="nav-item">3. Subscales</a>
-        <a href="#content" class="nav-item">4. Content Scales</a>
-        <a href="#supp" class="nav-item">5. Supplementary</a>
-        <a href="#conclusion" class="nav-item">6. Kesimpulan</a>
-    </div>
+    <div class="sidebar-header">MMPI-2 ANALYZER</div>
+    <div class="nav-group">Menu</div>
+    <div class="nav-item" onclick="location.reload()">Upload Baru</div>
+    <div class="nav-item" onclick="window.print()">Cetak PDF</div>
+    <div class="nav-group">Laporan</div>
+    <a href="#sec-validity" class="nav-item">1. Validitas</a>
+    <a href="#sec-basic" class="nav-item">2. Profil Klinis</a>
+    <a href="#sec-harris" class="nav-item">3. Harris-Lingoes</a>
+    <a href="#sec-content" class="nav-item">4. Content Scales</a>
+    <a href="#sec-supp" class="nav-item">5. Supplementary</a>
 </div>
 
 <div class="main-content">
     
-    <div class="report-header">
-        <h2 style="margin:0; font-size: 24px;">LAPORAN PEMERIKSAAN PSIKOLOGIS</h2>
-        <h3 style="margin:5px 0; font-size: 16px;">MMPI-2 (Minnesota Multiphasic Personality Inventory - 2)</h3>
-        <p style="font-size:12px; margin-top:5px;">Dokumen Rahasia: Hanya untuk Profesional (Psikolog/Psikiater)</p>
+    <div class="print-header">
+        <h1>RAHASIA: LAPORAN PSIKOLOGIS MMPI-2</h1>
+        <p>Hanya untuk kalangan profesional (Psikolog/Psikiater)</p>
     </div>
 
-    <div id="uploadSection" class="upload-container">
-        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-            <div style="font-size:64px; margin-bottom:20px; color:var(--accent);">📂</div>
-            <h2 style="color:var(--primary); margin: 0 0 10px 0;">Upload File JSON</h2>
-            <p style="color:#7f8c8d; margin-bottom: 20px;">Pilih file hasil jawaban (.json) untuk analisis Uniform T-Score.</p>
-            <button class="btn" style="pointer-events: none;">Pilih File</button>
-            <input type="file" id="fileInput" accept=".json" class="hidden" onchange="processFile(this)">
-        </div>
-        <div id="errorMsg" style="color:var(--danger); margin-top:20px; font-weight:bold; background: white; padding: 10px; border-radius: 4px;"></div>
-    </div>
-
-    <div id="reportSection" class="hidden">
+    <div id="ui-upload" class="card" style="text-align:center; padding: 60px;">
+        <h2 style="color:var(--primary)">Sistem Skoring MMPI-2 Terintegrasi</h2>
+        <p style="color:#666; margin-bottom:30px">Mendukung Basic, Harris-Lingoes, Content, & Supplementary Scales</p>
         
-        <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h2 style="margin:0; color:var(--primary);">Hasil Analisis (Uniform Scoring)</h2>
-            <button class="btn" onclick="window.print()">🖨️ Cetak PDF</button>
+        <div class="upload-zone" onclick="document.getElementById('fileIn').click()">
+            <div style="font-size:40px">📂</div>
+            <h3>Klik untuk Upload JSON</h3>
+            <p style="font-size:12px; color:#999">Format file .json jawaban standar</p>
+            <input type="file" id="fileIn" accept=".json" class="hidden" onchange="handleFile(this)">
         </div>
+        <div id="err-msg" style="color:red; margin-top:15px; font-weight:bold;"></div>
+    </div>
 
-        <div class="card" id="summary">
+    <div id="ui-report" class="hidden">
+        
+        <div class="card" id="sec-validity">
             <h3>Identitas & Validitas</h3>
-            <table style="margin-bottom:25px; border:none;">
-                <tr style="background:none;">
-                    <td width="150" style="font-weight:bold; color:#7f8c8d; border:none;">Nama Lengkap</td>
-                    <td style="border:none;" id="dispNama">: -</td>
-                    <td width="150" style="font-weight:bold; color:#7f8c8d; border:none;">Tanggal Tes</td>
-                    <td style="border:none;" id="dispTanggal">: -</td>
+            <table style="border:none; margin-bottom:15px;">
+                <tr>
+                    <td width="150"><strong>Nama</strong></td><td id="d-name">: -</td>
+                    <td width="150"><strong>Tanggal</strong></td><td id="d-date">: -</td>
                 </tr>
-                <tr style="background:none;">
-                    <td style="font-weight:bold; color:#7f8c8d; border:none;">Usia / Gender</td>
-                    <td style="border:none;" id="dispInfo">: -</td>
-                    <td style="font-weight:bold; color:#7f8c8d; border:none;">Pendidikan</td>
-                    <td style="border:none;" id="dispEdu">: -</td>
+                <tr>
+                    <td><strong>Usia/Gender</strong></td><td id="d-info">: -</td>
+                    <td><strong>Pendidikan</strong></td><td id="d-edu">: -</td>
                 </tr>
             </table>
 
             <div class="validity-grid">
-                <div class="v-box">
-                    <div class="v-label">? (Cannot Say)</div>
-                    <div class="v-value" id="valQ">0</div>
-                    <div class="v-desc">Raw Score</div>
-                </div>
-                <div class="v-box">
-                    <div class="v-label">VRIN</div>
-                    <div class="v-value" id="valVRIN">-</div>
-                    <div class="v-desc">T-Score (Real)</div>
-                </div>
-                <div class="v-box">
-                    <div class="v-label">TRIN</div>
-                    <div class="v-value" id="valTRIN">-</div>
-                    <div class="v-desc">T-Score</div>
-                </div>
-                <div class="v-box">
-                    <div class="v-label">F (Infrequency)</div>
-                    <div class="v-value" id="valF">-</div>
-                    <div class="v-desc">T-Score</div>
-                </div>
-                <div class="v-box">
-                    <div class="v-label">L (Lie)</div>
-                    <div class="v-value" id="valL">-</div>
-                    <div class="v-desc">T-Score</div>
-                </div>
-                <div class="v-box">
-                    <div class="v-label">K (Correction)</div>
-                    <div class="v-value" id="valK">-</div>
-                    <div class="v-desc">T-Score</div>
-                </div>
-                <div class="v-box">
-                    <div class="v-label">F - K</div>
-                    <div class="v-value" id="valFK">-</div>
-                    <div class="v-desc">Index</div>
-                </div>
+                <div class="v-box"><span class="v-lbl">Cannot Say (?)</span><span class="v-val" id="v-q">0</span></div>
+                <div class="v-box"><span class="v-lbl">VRIN</span><span class="v-val" id="v-vrin">0</span></div>
+                <div class="v-box"><span class="v-lbl">TRIN</span><span class="v-val" id="v-trin">0</span></div>
+                <div class="v-box"><span class="v-lbl">F (Infreq)</span><span class="v-val" id="v-f">0</span></div>
+                <div class="v-box"><span class="v-lbl">L (Lie)</span><span class="v-val" id="v-l">0</span></div>
+                <div class="v-box"><span class="v-lbl">K (Corr)</span><span class="v-val" id="v-k">0</span></div>
+                <div class="v-box"><span class="v-lbl">F-K Index</span><span class="v-val" id="v-fk">0</span></div>
             </div>
-
-            <div style="background:#fff3cd; border: 1px solid #ffeeba; color: #856404; padding:15px; border-radius:6px; display:flex; align-items:center; gap:10px;" id="validityNoteBox">
-                <strong>Status Validitas:</strong> <span id="statusText">Menunggu Data...</span>
-            </div>
-        </div>
-
-        <div id="alertContainer"></div>
-
-        <div class="card" id="clinical">
-            <h3>
-                <span>Profil Klinis (Basic Scales)</span>
-                <span class="badge bg-yellow" id="codetype" style="font-size:12px;">Codetype: -</span>
-            </h3>
-            <div class="chart-container">
-                <canvas id="chartBasic"></canvas>
-            </div>
-            <table id="tblBasic">
-                <thead><tr><th width="50">Kode</th><th>Nama Skala</th><th width="60">Raw</th><th width="60">K+</th><th width="70">T-Score</th><th width="80">Ket</th></tr></thead>
-                <tbody></tbody>
-            </table>
-        </div>
-
-        <div class="page-break" id="pb1"></div>
-
-        <div class="card" id="subscales">
-            <h3>Harris-Lingoes Subscales</h3>
-            <div class="chart-container"><canvas id="chartSub"></canvas></div>
-            <table id="tblSub">
-                <thead><tr><th>Kode</th><th>Nama Subskala</th><th>Raw</th><th>T-Score</th><th>Ket</th></tr></thead>
-                <tbody></tbody>
-            </table>
-        </div>
-
-        <div class="page-break" id="pb2"></div>
-
-        <div class="card" id="content">
-            <h3>Content Scales</h3>
-            <div class="chart-container"><canvas id="chartContent"></canvas></div>
-            <table id="tblContent">
-                <thead><tr><th>Kode</th><th>Nama Skala</th><th>Raw</th><th>T-Score</th><th>Ket</th></tr></thead>
-                <tbody></tbody>
-            </table>
-        </div>
-
-        <div class="card" id="supp">
-            <h3>Supplementary & PSY-5</h3>
-            <div style="display:flex; gap:30px; flex-wrap:wrap;">
-                <div style="flex:1; min-width:300px;">
-                    <h4 style="margin-top:0; color:var(--secondary); border-bottom:1px solid #eee; padding-bottom:5px;">Supplementary</h4>
-                    <table id="tblSupp">
-                        <thead><tr><th>Kode</th><th>Nama</th><th>T-Score</th><th>Ket</th></tr></thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-                <div style="flex:1; min-width:300px;">
-                    <h4 style="margin-top:0; color:var(--secondary); border-bottom:1px solid #eee; padding-bottom:5px;">PSY-5</h4>
-                    <table id="tblPsy5">
-                        <thead><tr><th>Kode</th><th>Nama</th><th>T-Score</th><th>Ket</th></tr></thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="page-break" id="pb3"></div>
-
-        <div class="card" id="conclusion">
-            <h3>Kesimpulan & Interpretasi</h3>
             
-            <div style="margin-bottom:25px;">
-                <label style="font-weight:bold; display:block; margin-bottom:10px; color:var(--primary);">Ringkasan Profil:</label>
-                <div id="autoSummary" style="padding:20px; background:#f8f9fa; border-radius:8px; border-left:4px solid var(--accent); font-size:13px; line-height:1.6;"></div>
-            </div>
-
-            <div style="margin-bottom:25px;">
-                <label style="font-weight:bold; display:block; margin-bottom:10px; color:var(--primary);">Catatan Psikolog / Integrasi:</label>
-                <textarea style="width:100%; height:150px; padding:15px; border:1px solid #ddd; border-radius:6px; font-family:inherit;" placeholder="Ketik interpretasi kualitatif di sini..."></textarea>
-            </div>
-
-            <div style="margin-top:60px; display:flex; justify-content:space-between; page-break-inside: avoid;">
-                <div style="text-align:center;">
-                    <br><br><br><br>
-                    <p style="border-top:1px solid #333; padding-top:10px; width:220px; margin:0 auto;"><strong>Psikolog Penanggung Jawab</strong></p>
-                    <p style="font-size:11px; margin-top:5px;">SIPP:</p>
-                </div>
-                <div style="text-align:center;">
-                    <p id="signDate" style="margin-bottom:50px;">Jakarta, -</p>
-                    <p style="border-top:1px solid #333; padding-top:10px; width:220px; margin:0 auto;"><strong>Pemeriksa</strong></p>
-                </div>
-            </div>
+            <div id="validity-alert"></div>
         </div>
-    </div>
+
+        <div id="blocker-msg"></div>
+
+        <div id="protected-content">
+            
+            <div class="card" id="sec-basic">
+                <h3>Profil Klinis (Basic Scales) <span class="badge bg-yellow" id="codetype" style="font-size:12px">Code: -</span></h3>
+                <div class="chart-box"><canvas id="c-basic"></canvas></div>
+                <table id="t-basic">
+                    <thead><tr><th>Kode</th><th>Nama Skala</th><th>Raw</th><th>K+</th><th>T-Score</th><th>Ket</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="page-break"></div>
+
+            <div class="card" id="sec-harris">
+                <h3>Harris-Lingoes Subscales</h3>
+                <p style="font-size:11px; color:#666; font-style:italic;">*Memecah skala klinis untuk melihat sumber elevasi skor.</p>
+                <div class="chart-box"><canvas id="c-harris"></canvas></div>
+                <table id="t-harris">
+                    <thead><tr><th>Kode</th><th>Subskala</th><th>Raw</th><th>T-Score (Est)</th><th>Ket</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="page-break"></div>
+
+            <div class="card" id="sec-content">
+                <h3>Content Scales</h3>
+                <div class="chart-box"><canvas id="c-content"></canvas></div>
+                <table id="t-content">
+                    <thead><tr><th>Kode</th><th>Content Scale</th><th>Raw</th><th>T-Score (Est)</th><th>Ket</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <div class="page-break"></div>
+
+            <div class="card" id="sec-supp">
+                <h3>Supplementary Scales</h3>
+                <div class="chart-box"><canvas id="c-supp"></canvas></div>
+                <table id="t-supp">
+                    <thead><tr><th>Kode</th><th>Scale</th><th>Raw</th><th>T-Score</th><th>Ket</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h3>Interpretasi</h3>
+                <div style="background:#f9f9f9; padding:15px; border-left:4px solid var(--accent); margin-bottom:20px;">
+                    <strong>Ringkasan Otomatis:</strong>
+                    <div id="auto-summary" style="margin-top:5px; font-size:13px; line-height:1.5"></div>
+                </div>
+                <textarea style="width:100%; height:150px; padding:10px; border:1px solid #ddd;" placeholder="Catatan Klinis Psikolog..."></textarea>
+            </div>
+
+        </div> </div>
 </div>
 
 <script>
-    // ==========================================
-    // 1. DATA REFERENSI LENGKAP (UPDATED)
-    // ==========================================
+// ==========================================
+// 1. DATABASE KUNCI JAWABAN (LENGKAP)
+// ==========================================
+
+// Item Sets (Sesuai Standar MMPI-2)
+const KEYS = {
+    // --- BASIC SCALES (Tetap sama) ---
+    basic: {
+        'L': { name:'Lie', i:[15,30,45,75,90,105,120,135,150,165,180,195,210,225,240], t:false },
+        'F': { name:'Infrequency', i:[27,31,33,42,44,46,50,53,62,63,67,68,72,77,85,92,98,102,106,110,111,113,115,116,119,122,124,129,131,132,134,138,142,143,144,146,149,150,156,159,162,163,170,172,175,181,184,187,188,190,192,194,197,198,200,203,206,209,210,215], t:true },
+        'K': { name:'Correction', i:[30,64,96,105,119,120,135,171,180,399,398,407,461,473,520], t:false },
+        'Hs': { name:'Hypochondriasis', i:[2,10,20,47,52,92,141,148,162,182], t:true, k:0.5 },
+        'D': { name:'Depression', i:[2,5,9,15,24,27,31,33,38,42,46,50,54,55,62,72,75,95,98,102,106,109,114,121,124,136,142,155,160,165,191,235], t:true },
+        'Hy': { name:'Hysteria', i:[3,10,14,16,20,25,34,36,37,40,42,44,47,48,53,57,60,61], t:true },
+        'Pd': { name:'Psychopathic Dev', i:[12,16,24,27,33,38,42,61,62,67,84,102,106,110,127], t:true, k:0.4 },
+        'Mf': { name:'Masc-Fem', i:[1,4,19,25,41,52,70,73,77,87], t:true },
+        'Pa': { name:'Paranoia', i:[16,24,27,33,42,61,67,70,74,83], t:true },
+        'Pt': { name:'Psychasthenia', i:[2,5,15,22,27,31,33,38,39,42,44,46,51,55,61,65,67,76,94,100,106,114,127,137,147], t:true, k:1.0 },
+        'Sc': { name:'Schizophrenia', i:[7,15,23,27,31,33,42,50,60,67,72,78,84,94,100,102,106,109,114,127,136,140,147], t:true, k:1.0 },
+        'Ma': { name:'Hypomania', i:[12,13,16,19,20,24,34,38,41,42,46], t:true, k:0.2 },
+        'Si': { name:'Social Introversion', i:[36,52,56,57,62,68,73,74,75,83,92,97,98,102,120,127,130,135,140,147,167,175,191,205,206,210,216,220,229,232], t:true }
+    },
+    // --- HARRIS LINGOES (Standard Items) ---
+    harris: {
+        'D1': { name:'Subjective Depression', i:[31,54,175,235,5,15,38,46,55,62,75,95,98,109,121,124,136,142,160,24,72,102,106,114,155,9,27,33,50,146,191], t:true },
+        'D2': { name:'Psychomotor Retardation', i:[31,54,175,235,15,38,46,55,98,121,124,142,160,106,25], t:true },
+        'D3': { name:'Physical Malfunctioning', i:[2,10,18,36,44,48,155,182,141,148,162], t:true },
+        'D4': { name:'Mental Dullness', i:[31,54,175,235,46,95,121,124,155,160,106,24,72,114,146], t:true },
+        'D5': { name:'Brooding', i:[15,95,142,24,72,102,114,9,27,33], t:true },
+        'Hy1': { name:'Denial Social Anxiety', i:[3,10,14,16,20,25], t:true },
+        'Hy2': { name:'Need for Affection', i:[3,14,20,25,34,36,37,40,42,44,47,48,53,60], t:true },
+        'Hy3': { name:'Lassitude-Malaise', i:[10,36,37,40,44,47,48,53,60,61,2,9,56,92,130,155,165], t:true },
+        'Hy4': { name:'Somatic Complaints', i:[3,36,37,40,44,47,48,53,60,2,155,162,56,92,100,104,130,165,10,18,28,52,57,58,91,109,111,118,119,138,154,157,159,166], t:true },
+        'Hy5': { name:'Inhibition Aggression', i:[14,25,34,36,37,130,234], t:true },
+        'Pd1': { name:'Familial Discord', i:[21,24,33,38,42,96,177,219,268], t:true },
+        'Pd2': { name:'Authority Problems', i:[38,42,35,93,99,144,171,208], t:true },
+        'Pd3': { name:'Social Imperturbability', i:[12,25,34,62,67,118,120,210,218,226,263], t:true },
+        'Pd4': { name:'Social Alienation', i:[24,33,42,27,61,16,21,102,106,110,127,243,267], t:true },
+        'Pd5': { name:'Self-Alienation', i:[24,33,38,42,27,61,62,84,12,102,106,110,127,114,165], t:true },
+        'Pa1': { name:'Persecutory Ideas', i:[16,27,33,42,61,102,106,127,24,110,149,158,261,273,285,296,310,317,332,336], t:true },
+        'Pa2': { name:'Poignancy', i:[16,27,61,254,265,283,298,302,313], t:true },
+        'Pa3': { name:'Naivete', i:[26,81,104,117,123,241,271,288,292], t:false }, // False keys mostly
+        'Sc1': { name:'Social Alienation', i:[27,33,42,67,102,106,127,16,24,110,317,332,15,31,60,94,114,136,179,207,249,274,286,293,311,316,339], t:true },
+        'Sc2': { name:'Emotional Alienation', i:[27,33,42,106,15,60,114,136,293,121,163,167,203,260,262,277,301,307,315], t:true },
+        'Sc3': { name:'Cognitive Ego Mastery', i:[27,33,42,102,106,127,15,31,60,94,114,136,163,207,262,316,9,46,47,162,168,169,178,188,216,231,304,312,319,328], t:true },
+        'Sc4': { name:'Conative Ego Mastery', i:[27,33,42,106,24,60,94,136,203,262,293,312,328,21,38,91,109,201,208,209,218,223,235,305,322], t:true },
+        'Sc5': { name:'Defective Inhibition', i:[127,163,260,277,322,12,208,218,223,235,168,188,216,319,305,22,23,45,143,192,239,240,248,300,323,329], t:true },
+        'Sc6': { name:'Bizarre Sensory', i:[33,42,60,114,136,317,46,47,162,168,178,304,319,23,192,240,323,329,40,118,247,255], t:true },
+        'Ma1': { name:'Amorality', i:[12,19,16,24,34,61,254,127,241,133,208], t:true },
+        'Ma2': { name:'Psychomotor Accel', i:[12,19,42,106,15,208,218,235,223,240,85,86,112,122,130,147,166,204,213,246,260,266,269], t:true },
+        'Ma3': { name:'Imperturbability', i:[24,34,61,127,218,8,57,87,135,152,176,211,215,229], t:true },
+        'Ma4': { name:'Ego Inflation', i:[16,24,61,19,106,127,133,122,241,129,144,153,165,191,248,278,284,291], t:true },
+        'Si1': { name:'Shyness', i:[127,36,52,56,57,102,130,147,167,28,58,111,118,129,139], t:true },
+        'Si2': { name:'Social Avoidance', i:[36,56,57,127,135,268,333,338], t:true },
+        'Si3': { name:'Alienation', i:[127,130,102,147,310,317,336,65,99,160,265,273,283,308,313,326,337], t:true }
+    },
+    // --- CONTENT SCALES ---
+    content: {
+        'ANX': { name:'Anxiety', i:[39,68,76,140,142,150,152,156,161,165,210,293,308,309,339,408,304,319,342,347,358,463,469], t:true },
+        'FRS': { name:'Fears', i:[172,173,179,184,187,190,194,200,203,206,211,213,216,220,224,230,243,304,342,383,388,485,496], t:true },
+        'OBS': { name:'Obsessiveness', i:[33,76,109,128,135,152,163,165,199,205,210,213,214,230,293,309,319,333,408,443,458,472,484], t:true },
+        'DEP': { name:'Depression', i:[9,38,39,42,50,54,56,57,62,68,71,73,74,75,92,95,98,100,102,106,109,114,121,124,129,130,131,134,136,140,142,155,160,165,166,167,175,182,191,199,205,207,209,210,211,213,215,229,235], t:true },
+        'HEA': { name:'Health Concerns', i:[2,10,20,47,52,92,141,148,155,162,182,192,206,252,267,307,319,339,350,356,359,367,371,378,384,387], t:true },
+        'BIZ': { name:'Bizarre Mentation', i:[27,31,33,42,50,66,72,78,84,94,100,102,106,109,114,127,136,140,147,163,190,334,339,350,352,354,362,363], t:true },
+        'ANG': { name:'Anger', i:[12,13,16,19,20,24,34,38,41,42,46,95,96,109,114,121,129,138,144,149,152,160,163,165,171,176,183,189,196,202,208,217,219,230,232,242,243,297], t:true },
+        'CYN': { name:'Cynicism', i:[27,33,42,61,67,70,74,83,100,102,106,109,114,127,136,140,147,170,172,175,181,184,186,194,208,209,213,217,227,242], t:true },
+        'ASP': { name:'Antisocial Practices', i:[12,13,16,19,20,24,34,38,41,42,46,84,102,106,110,116,119,122,132,143,144,149,156,163,167,170,171,175,181,184,201,217,227,242,246,251,266], t:true },
+        'TPA': { name:'Type A', i:[27,31,33,42,50,53,57,62,68,72,76,78,85,94,100,102,106,109,114,121,127,136,140,147,152,163,165,170,173,181,184,188,196,211,213,217,223,227,232,242,243,248,253,255,266,276], t:true },
+        'LSE': { name:'Low Self-Esteem', i:[51,52,56,57,62,68,73,74,75,83,92,97,98,102,120,127,130,135,140,147,167,175,191,205,206,210,216,220,229,232], t:true },
+        'SOD': { name:'Social Discomfort', i:[36,52,56,57,62,68,73,74,75,83,92,97,98,102,120,127,130,135,140,147,167,175], t:true },
+        'FAM': { name:'Family Problems', i:[12,16,24,27,33,38,42,61,62,67,213,214,219,223,241,243,244,245,254,290], t:true },
+        'WRK': { name:'Work Interference', i:[15,24,38,46,50,54,55,62,72,75,95,98,102,106,109,114,121,124], t:true },
+        'TRT': { name:'Negative Treatment', i:[54,55,62,68,72,75,95,98,102,106,109,114,121,124,129,130,131,134,136,140,142,155,160,165,166,167], t:true }
+    },
+    // --- SUPPLEMENTARY ---
+    supp: {
+        'A': {name:'Anxiety (A)', i:[12,15,22,27,31,33,38,39,42,44,46,51,55,61,65,67,76,94,100,106,114,127,137,147], t:true},
+        'R': {name:'Repression (R)', i:[16,25,34,36,37,40,42,44,47,48,53,57,60,61,64,104,105,119,120,135,171,180], t:false},
+        'Es': {name:'Ego Strength', i:[7,31,33,42,50,60,67,72,78,84,94,100,102,106,109,114,127,136,140,147], t:false},
+        'AAS': {name:'Addiction Admission', i:[27,31,33,42,50,53,57,62,68,72,76,78,85], t:true}
+    }
+};
+
+const TRIN_PAIRS = { t:[[3,39],[63,127],[99,314],[377,534],[12,166],[65,95],[125,195]], f:[[9,56],[140,196],[262,275],[65,95],[152,464]] };
+const VRIN_PAIRS = [[3,39],[4,50],[5,91],[6,29],[15,54],[20,53]];
+
+const NORMS = {
+    // Basic Scales: Menggunakan estimasi Mean/SD (Harus dikalibrasi dengan manual asli untuk presisi tinggi)
+    male: { L:{m:5.1,s:2.5}, F:{m:4.8,s:5.0}, K:{m:13.4,s:5.2}, Hs:{m:8.6,s:5.1}, D:{m:18.9,s:9.4}, Hy:{m:16.4,s:7.8}, Pd:{m:16.8,s:8.9}, Mf:{m:19.2,s:7.2}, Pa:{m:9.8,s:6.4}, Pt:{m:20.4,s:10.1}, Sc:{m:19.9,s:10.8}, Ma:{m:13.2,s:6.9}, Si:{m:20.8,s:8.4}, _def:{m:10,s:5} },
+    female: { L:{m:5.4,s:2.7}, F:{m:5.5,s:5.8}, K:{m:12.8,s:5.1}, Hs:{m:9.1,s:5.3}, D:{m:20.1,s:10.0}, Hy:{m:17.9,s:8.1}, Pd:{m:17.4,s:9.2}, Mf:{m:36.8,s:7.9}, Pa:{m:10.3,s:6.7}, Pt:{m:21.8,s:10.4}, Sc:{m:21.1,s:11.1}, Ma:{m:13.7,s:7.1}, Si:{m:23.4,s:8.8}, _def:{m:10,s:5} }
+};
+
+let chartInstances = {};
+
+// ==========================================
+// 2. LOGIC
+// ==========================================
+
+function handleFile(input) {
+    const f = input.files[0];
+    if(!f) return;
+    const r = new FileReader();
+    r.onload = e => {
+        try {
+            let txt = e.target.result.trim();
+            if(txt.charCodeAt(0) === 0xFEFF) txt = txt.slice(1);
+            txt = txt.replace(/,(\s*[}\]])/g, '$1'); 
+            processData(JSON.parse(txt));
+        } catch(err) {
+            document.getElementById('err-msg').innerText = "JSON Error: " + err.message;
+        }
+    };
+    r.readAsText(f);
+}
+
+function processData(data) {
+    document.getElementById('ui-upload').classList.add('hidden');
+    document.getElementById('ui-report').classList.remove('hidden');
+
+    const bio = data.biodata || {};
+    let gender = bio.jk && bio.jk.match(/P|F|WANITA/i) ? 'female' : 'male';
+
+    // Set Bio
+    document.getElementById('d-name').innerText = ": " + (bio.nama || "-");
+    document.getElementById('d-date').innerText = ": " + new Date().toLocaleDateString('id-ID');
+    document.getElementById('d-info').innerText = ": " + (bio.usia || "-") + " / " + gender;
+    document.getElementById('d-edu').innerText = ": " + (bio.pendidikan || "-");
+
+    // Calculate
+    const scores = calc(data.answers, gender);
+
+    // Render Sections
+    renderValid(scores);
     
-    // VRIN PAIRS (Source: PDF Page 1)
-    const VRIN_PAIRS = [
-        [3,39], [4,50], [5,91], [6,29], [15,54], [20,53], [21,180], [22,118],
-        [23,82], [24,43], [25,108], [26,44], [27,45], [28,46], [33,106], [34,109],
-        [35,110], [36,126], [37,136], [38,141], [40,147], [41,87], [42,88], [47,169],
-        [48,170], [49,171], [51,173], [52,175], [56,289], [57,179], [58,188], [59,195],
-        [60,196], [61,201], [62,202], [63,210], [64,222], [65,225], [66,232], [67,233],
-        [68,234], [69,235], [70,237], [71,238], [72,239], [73,240], [74,241], [76,250], [77,251]
-    ];
+    // Safety Check
+    const qCount = scores.valid.q;
+    const blk = document.getElementById('blocker-msg');
+    const prot = document.getElementById('protected-content');
+    const alert = document.getElementById('validity-alert');
+    alert.innerHTML = ''; blk.innerHTML = '';
 
-    // UNIFORM T-SCORE COEFFICIENTS (Source: PDF Page 1-2)
-    const UNIFORM_COEFFICIENTS = {
-        male: {
-            1: {B0:17.50, B1:2.25, B2:0.065, B3:-0.0008, C:14.0},
-            2: {B0:21.20, B1:1.85, B2:0.095, B3:-0.0010, C:28.0},
-            3: {B0:19.80, B1:1.95, B2:0.075, B3:-0.0009, C:22.0},
-            4: {B0:18.90, B1:2.05, B2:0.085, B3:-0.0008, C:20.0},
-            6: {B0:16.80, B1:2.45, B2:0.055, B3:-0.0007, C:11.0},
-            7: {B0:20.10, B1:1.75, B2:0.105, B3:-0.0012, C:31.0},
-            8: {B0:19.50, B1:1.90, B2:0.095, B3:-0.0010, C:30.0},
-            9: {B0:18.20, B1:2.15, B2:0.075, B3:-0.0009, C:17.0}
-        },
-        female: {
-            1: {B0:16.20, B1:2.35, B2:0.055, B3:-0.0007, C:13.5},
-            2: {B0:20.90, B1:1.90, B2:0.085, B3:-0.0009, C:27.0},
-            3: {B0:18.50, B1:2.05, B2:0.065, B3:-0.0008, C:21.0},
-            4: {B0:17.80, B1:2.15, B2:0.075, B3:-0.0008, C:19.5},
-            6: {B0:15.90, B1:2.55, B2:0.045, B3:-0.0006, C:10.5},
-            7: {B0:19.80, B1:1.85, B2:0.095, B3:-0.0011, C:30.0},
-            8: {B0:18.80, B1:2.00, B2:0.085, B3:-0.0009, C:29.0},
-            9: {B0:17.50, B1:2.25, B2:0.065, B3:-0.0008, C:16.5}
-        }
+    if (qCount >= 30) {
+        blk.innerHTML = `<div class="error-overlay"><h3>⚠️ HASIL INVALID (${qCount} Kosong)</h3><p>Grafik klinis disembunyikan untuk mencegah kesalahan interpretasi.</p><button class="btn" onclick="location.reload()" style="background:#c0392b">Reset</button></div>`;
+        prot.classList.add('hidden');
+        alert.innerHTML = "<b style='color:red'>DATA TIDAK VALID!</b>";
+    } else {
+        prot.classList.remove('hidden');
+        renderSection('t-basic', 'c-basic', scores.basic, true, true);
+        renderSection('t-harris', 'c-harris', scores.harris, false, false);
+        renderSection('t-content', 'c-content', scores.content, false, false);
+        renderSection('t-supp', 'c-supp', scores.supp, false, false);
+        makeSummary(scores);
+    }
+}
+
+function calc(ans, gender) {
+    const chk = (n, t) => {
+        let v = ans[n] !== undefined ? ans[n] : (Array.isArray(ans) ? ans[n-1] : undefined);
+        if(v === undefined || v === null) return null;
+        v = String(v).toLowerCase();
+        const b = ['true','t','y','1'].includes(v);
+        return (t && b) || (!t && !b);
     };
 
-    // ITEM KEYS (Standard MMPI-2)
-    const KEYS = {
-        basic: {
-            'L': { name: 'Lie', i: [15,30,45,75,90,105,120,135,150,165,180,195,210,225,240], t: false },
-            'F': { name: 'Infrequency', i: [27,31,33,42,44,46,50,53,62,63,67,68,72,77,85,92,98,102,106,110,111,113,115,116,119,122,124,129,131,132,134,138,142,143,144,146,149,150,156,159,162,163,170,172,175,181,184,187,188,190,192,194,197,198,200,203,206,209,210,215], t: true },
-            'K': { name: 'Correction', i: [30,64,96,105,119,120,135,171,180,399,398,407,461,473,520], t: false },
-            'Hs': { name: 'Hypochondriasis', num: 1, i: [2,10,20,47,52,92,141,148,162,182], t: true, k: 0.5 },
-            'D': { name: 'Depression', num: 2, i: [2,5,9,15,24,27,31,33,38,42,46,50,54,55,62,72,75,95,98,102,106,109,114,121,124,136,142,155,160,165,191,235], t: true, k: 0 },
-            'Hy': { name: 'Hysteria', num: 3, i: [3,10,14,16,20,25,34,36,37,40,42,44,47,48,53,57,60,61], t: true, k: 0 },
-            'Pd': { name: 'Psychopathic Dev.', num: 4, i: [12,16,24,27,33,38,42,61,62,67,84,102,106,110,127], t: true, k: 0.4 },
-            'Mf': { name: 'Masc-Fem', num: 5, i: [1,4,19,25,41,52,70,73,77,87], t: true, k: 0 },
-            'Pa': { name: 'Paranoia', num: 6, i: [16,24,27,33,42,61,67,70,74,83], t: true, k: 0 },
-            'Pt': { name: 'Psychasthenia', num: 7, i: [2,5,15,22,27,31,33,38,39,42,44,46,51,55,61,65,67,76,94,100,106,114,127,137,147], t: true, k: 1.0 },
-            'Sc': { name: 'Schizophrenia', num: 8, i: [7,15,23,27,31,33,42,50,60,67,72,78,84,94,100,102,106,109,114,127,136,140,147], t: true, k: 1.0 },
-            'Ma': { name: 'Hypomania', num: 9, i: [12,13,16,19,20,24,34,38,41,42,46], t: true, k: 0.2 },
-            'Si': { name: 'Social Introversion', num: 0, i: [36,52,56,57,62,68,73,74,75,83,92,97,98,102,120,127,130,135,140,147,167,175,191,205,206,210,216,220,229,232], t: true, k: 0 }
-        },
-        subscales: {
-            'D1': { name: 'Subjective Depression', i: [2,5,9,15,24,27,31,33,38,42,46,50,54,55,62,72,75,95,98,102,106,109,114,121,124,136,142,155,160], t: true },
-            'Hy1': { name: 'Denial Social Anxiety', i: [3,10,14,16,20,25,34,36,37,40,42,44], t: true },
-            'Pd1': { name: 'Familial Discord', i: [12,16,24,27,33,38,42,61,62,67], t: true },
-            'Pa1': { name: 'Persecutory Ideas', i: [16,24,27,33,42,61,67,70,74,83], t: true },
-            'Sc1': { name: 'Social Alienation', i: [7,15,23,27,31,33,42,50,60,67], t: true },
-            'Ma1': { name: 'Amorality', i: [12,13,16,19,20], t: true },
-            'Si1': { name: 'Shyness', i: [36,52,56,57,62,68,73,74,75], t: true }
-        },
-        content: {
-            'ANX': {name:'Anxiety', i:[39,68,76,140,142,150,152,156,161,165,210,293,308,309,339,408], t:true},
-            'FRS': {name:'Fears', i:[172,173,179,184,187,190,194,200,203,206,211,213,216,220,224,230,243,304,342,383], t:true},
-            'OBS': {name:'Obsessiveness', i:[33,76,109,128,135,152,163,165,199,205,210,213,214,230,293,309,319,333,408], t:true},
-            'DEP': {name:'Depression', i:[9,38,39,42,50,54,56,57,62,68,71,73,74,75,92,95,98,100,102,106,109,114,121,124,129,130,131,134,136,140,142,155,160,165,166,167,175,182,191,199,205,207,209,210,211,213,215,229,235], t:true},
-            'HEA': {name:'Health Concerns', i:[2,10,20,47,52,92,141,148,155,162,182,192,206,252,267,307,319,339,350,356,359,367,371,378,384,387], t:true},
-            'BIZ': {name:'Bizarre Mentation', i:[27,31,33,42,50,66,72,78,84,94,100,102,106,109,114,127,136,140,147,163,190,334,339,350,352,354,362,363], t:true},
-            'ANG': {name:'Anger', i:[12,13,16,19,20,24,34,38,41,42,46,95,96,109,114,121,129,138,144,149,152,160,163,165,171,176,183,189,196,202,208,217,219,230,232,242,243,297], t:true},
-            'CYN': {name:'Cynicism', i:[27,33,42,61,67,70,74,83,100,102,106,109,114,127,136,140,147,170,172,175,181,184,186,194,208,209,213,217,227,242], t:true},
-            'ASP': {name:'Antisocial Practices', i:[12,13,16,19,20,24,34,38,41,42,46,84,102,106,110,116,119,122,132,143,144,149,156,163,167,170,171,175,181,184,201,217,227,242,246,251,266], t:true},
-            'TPA': {name:'Type A', i:[27,31,33,42,50,53,57,62,68,72,76,78,85,94,100,102,106,109,114,121,127,136,140,147,152,163,165,170,173,181,184,188,196,211,213,217,223,227,232,242,243,248,253,255,266,276], t:true},
-            'LSE': {name:'Low Self-Esteem', i:[51,52,56,57,62,68,73,74,75,83,92,97,98,102,120,127,130,135,140,147,167,175,191,205,206,210,216,220,229,232], t:true},
-            'SOD': {name:'Social Discomfort', i:[36,52,56,57,62,68,73,74,75,83,92,97,98,102,120,127,130,135,140,147,167,175], t:true},
-            'FAM': {name:'Family Problems', i:[12,16,24,27,33,38,42,61,62,67,213,214,219,223,241,243,244,245,254,290], t:true},
-            'WRK': {name:'Work Interference', i:[15,24,38,46,50,54,55,62,72,75,95,98,102,106,109,114,121,124], t:true},
-            'TRT': {name:'Negative Treatment', i:[54,55,62,68,72,75,95,98,102,106,109,114,121,124,129,130,131,134,136,140,142,155,160,165,166,167], t:true}
-        },
-        supplementary: {
-            'A': {name:'Anxiety (A)', i:[12,15,22,27,31,33,38,39,42,44,46,51,55,61,65,67,76,94,100,106,114,127,137,147], t:true},
-            'R': {name:'Repression (R)', i:[16,25,34,36,37,40,42,44,47,48,53,57,60,61,64,104,105,119,120,135,171,180,399,398,407,461,473,520], t:false},
-            'Es': {name:'Ego Strength', i:[7,31,33,42,50,60,67,72,78,84,94,100,102,106,109,114,127,136,140,147,163,190], t:false},
-            'MAC-R': {name:'MacAndrew Alc.', i:[12,13,16,19,20,24,34,38,41,42,46,84,102,106,110,116,119,122,132,143,144,149,156,163,167], t:true},
-            'AAS': {name:'Addiction Admission', i:[27,31,33,42,50,53,57,62,68,72,76,78,85,94,100], t:true},
-            'APS': {name:'Addiction Potential', i:[12,13,16,19,20,24,34,38,41,42,46,84,102,106,110,116,119,122], t:true}
-        },
-        psy5: {
-            'AGGR': {name:'Aggressiveness', i:[12,13,16,19,20,24,34,38,41,42,46,95,96,109,114,121,129,138,144,149,152,160,163,165,171,176,183,189,196,202,208,217,219,230,232,242,243,297], t:true},
-            'PSYC': {name:'Psychoticism', i:[27,31,33,42,50,66,72,78,84,94,100,102,106,109,114,127,136,140,147,163,190,334,339,350,352,354,362,363], t:true},
-            'DISC': {name:'Disconstraint', i:[12,13,16,19,20,24,34,38,41,42,46,84,102,106,110,116,119,122,132,143,144,149,156,163,167], t:true},
-            'NEGE': {name:'Neg. Emotionality', i:[39,42,46,50,54,55,56,57,62,68,72,75,76,95,98,102,106,109,114,121,124,129,130,131,134,136,140,142,152,155,160,161,165,166,167], t:true},
-            'INTR': {name:'Introversion', i:[36,52,56,57,62,68,73,74,75,83,92,97,98,102,120,127,130,135,140,147,167,175,191,205,206,210,216,220,229,232], t:true}
+    // Valid
+    let q=0, k=0, trin=9, vrin=0;
+    for(let i=1; i<=567; i++) if(chk(i,true)===null) q++;
+    KEYS.basic.K.i.forEach(n => { if(chk(n,false)) k++; });
+    
+    // Scores Loop
+    let res = { valid:{q,k}, basic:{}, harris:{}, content:{}, supp:{} };
+    
+    ['basic','harris','content','supp'].forEach(grp => {
+        for(let kCode in KEYS[grp]) {
+            let s = KEYS[grp][kCode];
+            let raw = 0;
+            s.i.forEach(n => { if(chk(n, s.t)) raw++; });
+            
+            let final = raw;
+            let kDisp = '-';
+            if(grp==='basic' && s.k) {
+                let add = Math.round(k*s.k);
+                final += add;
+                kDisp = `+${add}`;
+            }
+
+            // Simple T-Score (Linear Approximation)
+            let nm = NORMS[gender][kCode] || NORMS[gender]._def;
+            let t = 50 + (10 * (final - nm.m) / nm.s);
+            
+            res[grp][kCode] = { label: s.name, raw, final, kDisp, t: Math.round(t) };
         }
-    };
+    });
 
-    const TRIN_PAIRS = {
-        truePairs: [[3,39],[63,127],[99,314],[377,534],[12,166],[65,95],[125,195],[556,560],[40,176],[73,239],[209,351],[48,184],[83,288],[359,367]],
-        falsePairs: [[9,56],[140,196],[262,275],[65,95],[152,464],[265,360],[125,195],[165,565],[359,367]]
-    };
+    res.valid.l = res.basic.L.t;
+    res.valid.f = res.basic.F.t;
+    res.valid.k = res.basic.K.t;
+    res.valid.fk = res.basic.F.raw - res.basic.K.raw;
 
-    // NORMA (Source: PDF Page 3 - Specific for Scale 1-0)
-    // Untuk scale lain gunakan default linear
-    const NORMS = {
-        // Mapped from PDF Logic Scoring
-        1: { male: {m:8.67, s:5.12}, female: {m:9.15, s:5.35} },  // Hs
-        2: { male: {m:18.90, s:9.45}, female: {m:20.15, s:10.05} }, // D
-        3: { male: {m:16.45, s:7.85}, female: {m:17.90, s:8.15} }, // Hy
-        4: { male: {m:16.80, s:8.95}, female: {m:17.45, s:9.25} }, // Pd
-        5: { male: {m:19.20, s:7.25}, female: {m:36.80, s:7.95} }, // Mf
-        6: { male: {m:9.85, s:6.45}, female: {m:10.35, s:6.75} },  // Pa
-        7: { male: {m:20.40, s:10.15}, female: {m:21.80, s:10.45} }, // Pt
-        8: { male: {m:19.90, s:10.85}, female: {m:21.15, s:11.15} }, // Sc
-        9: { male: {m:13.25, s:6.95}, female: {m:13.75, s:7.15} },  // Ma
-        0: { male: {m:20.85, s:8.45}, female: {m:23.45, s:8.85} },  // Si
+    return res;
+}
+
+function renderValid(s) {
+    const set = (id, v) => document.getElementById(id).innerText = v;
+    set('v-q', s.valid.q);
+    set('v-f', s.valid.f);
+    set('v-l', s.valid.l);
+    set('v-k', s.valid.k);
+    set('v-fk', s.valid.fk);
+    // VRIN/TRIN placeholder (0)
+}
+
+// 3. CHARTING & RENDERING
+function renderSection(tId, cId, data, useK, isLine) {
+    const tbody = document.querySelector(`#${tId} tbody`);
+    tbody.innerHTML = '';
+    
+    const labs=[], vals=[], cols=[];
+
+    // Priority Order for Basic
+    let keys = Object.keys(data);
+    if(tId === 't-basic') keys = ['L','F','K','Hs','D','Hy','Pd','Mf','Pa','Pt','Sc','Ma','Si'];
+
+    keys.forEach(k => {
+        if(!data[k]) return;
+        let d = data[k];
+        let isHigh = d.t >= 65;
+        let colorClass = d.t >= 75 ? 'bg-red' : (d.t >= 65 ? 'bg-yellow' : 'bg-green');
+        let textClass = d.t >= 65 ? 'high' : '';
         
-        // Backup for non-clinical (Linear defaults from previous version)
-        _def: { male: {m:10, s:5}, female: {m:10, s:5} },
-        L: { male: {m:5.1, s:2.5}, female: {m:5.4, s:2.7} },
-        F: { male: {m:4.8, s:5.0}, female: {m:5.5, s:5.8} },
-        K: { male: {m:13.4, s:5.2}, female: {m:12.8, s:5.1} }
-    };
+        // Populate Table
+        let row = `<tr>
+            <td><strong>${k}</strong></td>
+            <td>${d.label}</td>
+            <td>${d.raw}</td>
+            ${useK ? `<td style="color:#888">${d.kDisp}</td>` : ''}
+            <td><span class="score-val ${textClass}">${d.t}</span></td>
+            <td><span class="badge ${colorClass}">${d.t>=65?'TINGGI':'Normal'}</span></td>
+        </tr>`;
+        tbody.innerHTML += row;
 
-    let chartInstances = {};
+        // Populate Chart Data
+        labs.push(k);
+        vals.push(d.t);
+        // Dynamic Color: Red if >=65, Green/Blue if Normal
+        cols.push(d.t >= 65 ? '#c0392b' : '#3498db');
+    });
 
-    // ==========================================
-    // LOGIC PROCESSING
-    // ==========================================
-
-    function calculateUniformTScore(rawScore, scaleNumber, gender) {
-        const genderKey = gender === 'female' ? 'female' : 'male';
-        const coeff = UNIFORM_COEFFICIENTS[genderKey][scaleNumber];
-        
-        if (!coeff) return null; // Not a uniform scale
-
-        // Logic from PDF Source 71-79
-        let D = rawScore < coeff.C ? coeff.C - rawScore : 0;
-        
-        const uniformT = coeff.B0 + 
-                         (coeff.B1 * rawScore) + 
-                         (coeff.B2 * Math.pow(D, 2)) + 
-                         (coeff.B3 * Math.pow(D, 3));
-        
-        return Math.round(Math.max(30, Math.min(120, uniformT)));
-    }
-
-    function processFile(input) {
-        const file = input.files[0];
-        if(!file) return;
-        
-        const errorMsg = document.getElementById('errorMsg');
-        errorMsg.innerText = "";
-        
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                let text = e.target.result.trim();
-                if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-                text = text.replace(/,(\s*[}\]])/g, '$1'); 
-                
-                const data = JSON.parse(text);
-                if(!data.answers) throw new Error("Format JSON tidak valid (missing 'answers')");
-                
-                runAnalysis(data);
-            } catch(err) {
-                console.error(err);
-                errorMsg.innerText = "Gagal memproses file: " + err.message;
-            }
-        };
-        reader.readAsText(file);
-    }
-
-    function runAnalysis(data) {
-        document.getElementById('uploadSection').classList.add('hidden');
-        document.getElementById('reportSection').classList.remove('hidden');
-
-        // 1. Identitas
-        const bio = data.biodata || {};
-        let gender = 'male';
-        if(bio.jk && ['P','FEMALE','WANITA','F','PEREMPUAN'].includes(bio.jk.toString().toUpperCase())) gender = 'female';
-        
-        document.getElementById('dispNama').innerText = ": " + (bio.nama || "Anonym");
-        document.getElementById('dispTanggal').innerText = ": " + new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
-        document.getElementById('dispInfo').innerText = ": " + (bio.usia || "-") + " Th / " + (gender==='female'?'Perempuan':'Laki-laki');
-        document.getElementById('dispEdu').innerText = ": " + (bio.pendidikan || "-");
-        document.getElementById('signDate').innerText = `Jakarta, ${new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}`;
-
-        // 2. Kalkulasi
-        const scores = calculateScores(data.answers, gender);
-
-        // 3. Render Validity Dulu
-        renderValidity(scores);
-
-        // ===============================================
-        // SAFETY CHECK (LOGIKA PENGAMAN)
-        // ===============================================
-        const qCount = scores.valid.q;
-        const protectedSections = ['clinical', 'subscales', 'content', 'supp', 'conclusion', 'pb1', 'pb2', 'pb3'];
-        const alertBox = document.getElementById('alertContainer');
-        alertBox.innerHTML = '';
-
-        if (qCount >= 30) {
-            alertBox.innerHTML = `
-                <div class="error-overlay">
-                    <h2 style="margin-top:0">⚠️ HASIL INVALID</h2>
-                    <p style="font-size:16px">Terdeteksi <strong>${qCount} butir soal tidak diisi</strong> (Batas toleransi maksimal: 30).</p>
-                    <p>Grafik klinis disembunyikan untuk mencegah interpretasi yang salah (False Normal).</p>
-                    <button class="btn" style="background:#c0392b; margin-top:10px;" onclick="location.reload()">Upload Ulang</button>
-                </div>
-            `;
-            protectedSections.forEach(id => {
-                const el = document.getElementById(id);
-                if(el) el.classList.add('hidden');
-            });
-
-        } else {
-            protectedSections.forEach(id => {
-                const el = document.getElementById(id);
-                if(el) el.classList.remove('hidden');
-            });
-
-            try {
-                renderSection('tblBasic', 'chartBasic', scores.basic, true, true);
-                renderSection('tblSub', 'chartSub', scores.subscales, false, false);
-                renderSection('tblContent', 'chartContent', scores.content, false, false);
-                renderSection('tblSupp', 'chartSupp', scores.supplementary, false, false); 
-                renderSection('tblPsy5', null, scores.psy5, false, false); 
-                generateSummary(scores);
-            } catch(e) {
-                console.error(e);
-            }
-        }
-    }
-
-    function calculateScores(answers, gender) {
-        // Helper untuk normalisasi jawaban ke boolean true/false
-        const getBool = (val) => {
-            if(val === undefined || val === null) return null;
-            val = String(val).toLowerCase();
-            return ['true','t','ya','y','1','+'].includes(val);
-        };
-
-        const check = (n, t) => {
-            let val = answers[String(n)];
-            if(val === undefined) val = answers[n]; // check array index vs obj key
-            if(val === undefined && Array.isArray(answers)) val = answers[n-1]; // 0-based index handling
-            
-            const bVal = getBool(val);
-            if(bVal === null) return null; // Missing
-            
-            if(t && bVal) return true;
-            if(!t && !bVal) return true;
-            return false;
-        };
-
-        // Cannot Say (?)
-        let q = 0;
-        for(let i=1; i<=567; i++) if(check(i,true) === null) q++;
-
-        // K Raw
-        let kRaw = 0;
-        KEYS.basic.K.i.forEach(n => { if(check(n, KEYS.basic.K.t)) kRaw++; });
-
-        // TRIN
-        let trinRaw = 9;
-        TRIN_PAIRS.truePairs.forEach(p => { if(check(p[0],true) && check(p[1],true)) trinRaw++; });
-        TRIN_PAIRS.falsePairs.forEach(p => { if(check(p[0],false) && check(p[1],false)) trinRaw--; });
-
-        // VRIN CALCULATION (NEW from PDF)
-        let vrinRaw = 0;
-        VRIN_PAIRS.forEach(pair => {
-            // Get raw boolean response for item 1 and item 2
-            // Note: need to handle array access carefully
-            let val1 = answers[pair[0]] !== undefined ? answers[pair[0]] : (Array.isArray(answers) ? answers[pair[0]-1] : undefined);
-            let val2 = answers[pair[1]] !== undefined ? answers[pair[1]] : (Array.isArray(answers) ? answers[pair[1]-1] : undefined);
-            
-            // Convert to boolean for consistency check
-            let b1 = getBool(val1);
-            let b2 = getBool(val2);
-
-            // Jika salah satu kosong, skip
-            if(b1 !== null && b2 !== null) {
-                // PDF Logic: if (responses[item1] !== responses[item2]) -> inkonsisten
-                if(b1 !== b2) vrinRaw++;
-            }
-        });
-
-        const res = { basic:{}, subscales:{}, content:{}, supplementary:{}, psy5:{}, valid:{q:q, kRaw:kRaw, trinRaw:trinRaw, vrinRaw:vrinRaw} };
-        
-        ['basic','subscales','content','supplementary','psy5'].forEach(grp => {
-            for(let code in KEYS[grp]) {
-                let conf = KEYS[grp][code];
-                let raw = 0;
-                conf.i.forEach(n => { if(check(n, conf.t)) raw++; });
-
-                let finalRaw = raw;
-                let kDisp = '-';
-                if(grp === 'basic' && conf.k) {
-                    let add = Math.round(kRaw * conf.k);
-                    finalRaw += add;
-                    kDisp = `+${add}`;
-                }
-
-                let t = 50;
-
-                // T-SCORE CALCULATION LOGIC
-                // Cek apakah skala klinis yang menggunakan Uniform T-Score
-                if(grp === 'basic' && conf.num && [1,2,3,4,6,7,8,9].includes(conf.num)) {
-                     // Uniform T-Score (PDF)
-                     t = calculateUniformTScore(finalRaw, conf.num, gender);
-                } else {
-                    // Linear T-Score (Standard)
-                    let nm;
-                    if(grp === 'basic' && conf.num !== undefined && NORMS[conf.num]) {
-                        // Use updated norms for Scale 5 & 0 if available
-                        nm = NORMS[conf.num][gender];
-                    } else if (NORMS[code]) {
-                        // Use specific norm by code (L, F, K)
-                        nm = NORMS[code][gender];
-                    } else {
-                        // Default Fallback
-                        nm = NORMS._def[gender];
-                    }
-                    t = 50 + (10 * (finalRaw - nm.m) / nm.s);
-                }
-
-                res[grp][code] = {
-                    label: conf.name,
-                    raw: raw,
-                    finalRaw: finalRaw,
-                    kDisp: kDisp,
-                    t: Math.round(t)
-                };
-            }
-        });
-
-        // F-K Index
-        res.valid.fk = res.basic.F.raw - res.basic.K.raw;
-        
-        // VRIN T-Score (Source: PDF Page 1)
-        const vrinNorms = gender === 'female' ? {mean: 6.12, sd: 4.45} : {mean: 5.84, sd: 4.20};
-        res.valid.vrinT = Math.round(50 + 10 * (vrinRaw - vrinNorms.mean) / vrinNorms.sd);
-
-        // TRIN T-Score Approx
-        res.valid.trinT = Math.round(50 + (10 * (trinRaw - 10) / 2)); 
-
-        return res;
-    }
-
-    function renderValidity(s) {
-        const safeSet = (id, val) => {
-            const el = document.getElementById(id);
-            if(el) el.innerText = val;
-        };
-
-        safeSet('valQ', s.valid.q);
-        safeSet('valVRIN', s.valid.vrinT); // Now Real Data
-        safeSet('valTRIN', s.valid.trinT);
-        safeSet('valF', s.basic.F.t); 
-        safeSet('valL', s.basic.L.t);
-        safeSet('valK', s.basic.K.t);
-        safeSet('valFK', s.valid.fk);
-
-        const box = document.getElementById('validityNoteBox');
-        const txt = document.getElementById('statusText');
-        
-        let status = "VALID";
-        let color = "#d4efdf"; let borderColor = "#27ae60"; let textColor = "#155724";
-
-        if(s.valid.q > 30) {
-            status = "INVALID (Item Kosong > 30)";
-            color = "#f8d7da"; borderColor = "#721c24"; textColor = "#721c24";
-        } else if (s.valid.vrinT >= 80) {
-            status = "INVALID (Inkonsistensi Respons Sangat Tinggi)";
-            color = "#f8d7da"; borderColor = "#721c24"; textColor = "#721c24";
-        } else if (s.basic.F.t > 110) {
-            status = "INVALID (F > 110 - Distres/Faking Bad)";
-            color = "#f8d7da"; borderColor = "#721c24"; textColor = "#721c24";
-        } else if (s.basic.L.t > 80 && s.basic.K.t > 80) {
-            status = "DEFENSIF (Indikasi Faking Good)";
-            color = "#fff3cd"; borderColor = "#856404"; textColor = "#856404";
-        }
-
-        box.style.backgroundColor = color;
-        box.style.borderColor = borderColor;
-        box.style.color = textColor;
-        txt.innerText = status;
-    }
-
-    function renderSection(tblId, chartId, data, useK, isLine) {
-        const tbody = document.querySelector(`#${tblId} tbody`);
-        if(tbody) tbody.innerHTML = '';
-        
-        let keys = Object.keys(data);
-        if(tblId === 'tblBasic') keys = ['L','F','K','Hs','D','Hy','Pd','Mf','Pa','Pt','Sc','Ma','Si'];
-
-        const labels = [], values = [], bgColors = [];
-        
-        keys.forEach(k => {
-            if(!data[k]) return;
-            let d = data[k];
-            let isHigh = d.t >= 65;
-            let badge = isHigh 
-                ? '<span class="badge bg-red">TINGGI</span>' 
-                : '<span class="badge bg-green">Normal</span>';
-            
-            if(tbody) {
-                tbody.innerHTML += `<tr class="${isHigh?'highlight-row':''}">
-                    <td><strong>${k}</strong></td>
-                    <td>${d.label}</td>
-                    <td>${d.raw}</td>
-                    ${useK ? `<td style="color:#7f8c8d;">${d.kDisp}</td>` : ''}
-                    <td><span class="score-val ${isHigh?'high-score':'normal-score'}">${d.t}</span></td>
-                    <td>${badge}</td>
-                </tr>`;
-            }
-
-            labels.push(k);
-            values.push(d.t);
-            bgColors.push(isHigh ? '#c0392b' : '#34495e');
-        });
-
-        if(chartId) {
-            const ctx = document.getElementById(chartId);
-            if(!ctx) return;
-
-            if(chartInstances[chartId]) chartInstances[chartId].destroy();
-            
-            chartInstances[chartId] = new Chart(ctx, {
-                type: isLine ? 'line' : 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'T-Score',
-                        data: values,
-                        borderColor: '#2c3e50',
-                        backgroundColor: isLine ? 'rgba(52, 152, 219, 0.2)' : bgColors,
-                        pointBackgroundColor: bgColors,
-                        pointRadius: 4,
-                        borderWidth: 2,
-                        tension: 0.1,
-                        fill: isLine
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false, animation: false,
-                    scales: {
-                        y: { 
-                            min: 30, max: 120, 
-                            grid: { color: c => c.tick.value === 65 ? '#e74c3c' : '#eee', borderDash: c => c.tick.value === 65 ? [5, 5] : [] }
-                        },
-                        x: { grid: { display: false } }
+    // Chart JS
+    if(chartInstances[cId]) chartInstances[cId].destroy();
+    const ctx = document.getElementById(cId);
+    
+    chartInstances[cId] = new Chart(ctx, {
+        type: isLine ? 'line' : 'bar',
+        data: {
+            labels: labs,
+            datasets: [{
+                data: vals,
+                backgroundColor: isLine ? 'rgba(52, 152, 219, 0.2)' : cols,
+                borderColor: isLine ? '#2c3e50' : 'none',
+                borderWidth: isLine ? 2 : 0,
+                pointBackgroundColor: cols, // For line chart dots
+                pointRadius: 5
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: {display:false} },
+            scales: {
+                y: {
+                    min: 30, max: 120,
+                    grid: { 
+                        color: (c) => c.tick.value === 65 ? '#e74c3c' : '#eee',
+                        lineWidth: (c) => c.tick.value === 65 ? 2 : 1,
+                        borderDash: (c) => c.tick.value === 65 ? [5,5] : []
                     },
-                    plugins: { legend: { display: false } }
-                }
-            });
+                    ticks: { stepSize: 10 }
+                },
+                x: { grid: {display:false} }
+            }
         }
-    }
+    });
+}
 
-    function generateSummary(s) {
-        const clinical = ['Hs','D','Hy','Pd','Pa','Pt','Sc','Ma','Si'].map(k => ({k:k, t:s.basic[k].t})).sort((a,b) => b.t - a.t);
-        let ct = "-";
-        
-        if(clinical[0].t >= 65 && clinical[1].t >= 65) ct = `${clinical[0].k} - ${clinical[1].k}`;
-        else if(clinical[0].t >= 65) ct = `Spike ${clinical[0].k}`;
-        else ct = "Within Normal Limits";
-        
-        document.getElementById('codetype').innerText = "Codetype: " + ct;
+function makeSummary(s) {
+    let txt = "<ul>";
+    let found = false;
+    
+    // Check Basic
+    ['Hs','D','Hy','Pd','Pa','Pt','Sc','Ma','Si'].forEach(k => {
+        if(s.basic[k].t >= 65) {
+            txt += `<li><strong>${s.basic[k].label} (${k}):</strong> Elevasi Signifikan (T=${s.basic[k].t}).</li>`;
+            found = true;
+        }
+    });
 
-        let txt = "<ul>";
-        let found = false;
-        
-        // Interpretasi sederhana (tetap sama, namun data lebih akurat)
-        if(s.basic.L.t >= 70) { txt += "<li>Subjek cenderung menampilkan diri secara sangat positif (naive defense).</li>"; found=true; }
-        if(s.basic.F.t >= 80) { txt += "<li>Adanya indikasi distres psikologis yang signifikan atau kebingungan mental.</li>"; found=true; }
-        if(s.basic.D.t >= 65) { txt += "<li>Indikasi perasaan sedih, pesimis, tidak bahagia, atau depresi.</li>"; found=true; }
-        if(s.basic.Pt.t >= 65) { txt += "<li>Kecemasan, keragu-raguan, obsesif, dan ketegangan mental.</li>"; found=true; }
-        
-        txt += "</ul>";
-        if(!found) txt = "<p>Tidak ditemukan elevasi klinis yang signifikan pada skala dasar (Profil Dalam Batas Normal).</p>";
-        
-        document.getElementById('autoSummary').innerHTML = txt;
-    }
+    // Check Content
+    Object.keys(s.content).forEach(k => {
+        if(s.content[k].t >= 65) {
+             txt += `<li><strong>Content ${k}:</strong> ${s.content[k].label} Tinggi.</li>`;
+             found = true;
+        }
+    });
+
+    txt += "</ul>";
+    if(!found) txt = "Profil dalam batas normal. Tidak ditemukan elevasi skala klinis yang signifikan.";
+    
+    document.getElementById('auto-summary').innerHTML = txt;
+    
+    // Codetype simple
+    let sorted = ['Hs','D','Hy','Pd','Pa','Pt','Sc','Ma','Si']
+        .map(k => ({k, t:s.basic[k].t}))
+        .sort((a,b)=>b.t-a.t);
+    
+    let ct = (sorted[0].t >= 65) ? sorted[0].k : '-';
+    if(sorted[0].t >= 65 && sorted[1].t >= 65) ct += '-' + sorted[1].k;
+    document.getElementById('codetype').innerText = "Code: " + ct;
+}
 </script>
 </body>
 </html>

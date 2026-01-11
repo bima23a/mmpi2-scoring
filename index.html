@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MMPI-2 Professional Scoring System (v7.2 Protected)</title>
+    <title>MMPI-2 Professional Scoring System (v8.0 Uniform)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary: #2c3e50;
             --secondary: #34495e;
-            --accent: #3498db;
-            --danger: #e74c3c;
+            --accent: #2980b9;
+            --danger: #c0392b;
             --success: #27ae60;
             --warning: #f39c12;
             --light: #ecf0f1;
@@ -78,7 +78,7 @@
         .high-score { color: var(--danger); }
         .normal-score { color: var(--success); }
 
-        /* --- ERROR OVERLAY (NEW) --- */
+        /* --- ERROR OVERLAY --- */
         .error-overlay {
             background: #ffeaa7;
             border: 2px solid #fdcb6e;
@@ -151,18 +151,16 @@
 
 <div class="sidebar">
     <div class="sidebar-header">
-        <span>MMPI-2 ANALYZER</span>
+        <span>MMPI-2 PRO</span>
     </div>
-    
     <div class="nav-scroll">
         <div class="nav-group">Menu Utama</div>
         <div class="nav-item" onclick="location.reload()">Reset / Data Baru</div>
         <div class="nav-item" onclick="window.print()">Cetak Laporan</div>
-
         <div class="nav-group">Navigasi Laporan</div>
         <a href="#summary" class="nav-item">1. Ringkasan & Validitas</a>
         <a href="#clinical" class="nav-item">2. Profil Klinis</a>
-        <a href="#subscales" class="nav-item">3. Subscales (Harris-Lingoes)</a>
+        <a href="#subscales" class="nav-item">3. Subscales</a>
         <a href="#content" class="nav-item">4. Content Scales</a>
         <a href="#supp" class="nav-item">5. Supplementary</a>
         <a href="#conclusion" class="nav-item">6. Kesimpulan</a>
@@ -181,7 +179,7 @@
         <div class="upload-area" onclick="document.getElementById('fileInput').click()">
             <div style="font-size:64px; margin-bottom:20px; color:var(--accent);">📂</div>
             <h2 style="color:var(--primary); margin: 0 0 10px 0;">Upload File JSON</h2>
-            <p style="color:#7f8c8d; margin-bottom: 20px;">Pilih file hasil jawaban (.json) untuk memulai analisis otomatis.</p>
+            <p style="color:#7f8c8d; margin-bottom: 20px;">Pilih file hasil jawaban (.json) untuk analisis Uniform T-Score.</p>
             <button class="btn" style="pointer-events: none;">Pilih File</button>
             <input type="file" id="fileInput" accept=".json" class="hidden" onchange="processFile(this)">
         </div>
@@ -191,13 +189,12 @@
     <div id="reportSection" class="hidden">
         
         <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h2 style="margin:0; color:var(--primary);">Hasil Analisis</h2>
+            <h2 style="margin:0; color:var(--primary);">Hasil Analisis (Uniform Scoring)</h2>
             <button class="btn" onclick="window.print()">🖨️ Cetak PDF</button>
         </div>
 
         <div class="card" id="summary">
             <h3>Identitas & Validitas</h3>
-            
             <table style="margin-bottom:25px; border:none;">
                 <tr style="background:none;">
                     <td width="150" style="font-weight:bold; color:#7f8c8d; border:none;">Nama Lengkap</td>
@@ -222,7 +219,7 @@
                 <div class="v-box">
                     <div class="v-label">VRIN</div>
                     <div class="v-value" id="valVRIN">-</div>
-                    <div class="v-desc">T-Score</div>
+                    <div class="v-desc">T-Score (Real)</div>
                 </div>
                 <div class="v-box">
                     <div class="v-label">TRIN</div>
@@ -305,7 +302,7 @@
                     </table>
                 </div>
                 <div style="flex:1; min-width:300px;">
-                    <h4 style="margin-top:0; color:var(--secondary); border-bottom:1px solid #eee; padding-bottom:5px;">PSY-5 (Personality Psychopathology)</h4>
+                    <h4 style="margin-top:0; color:var(--secondary); border-bottom:1px solid #eee; padding-bottom:5px;">PSY-5</h4>
                     <table id="tblPsy5">
                         <thead><tr><th>Kode</th><th>Nama</th><th>T-Score</th><th>Ket</th></tr></thead>
                         <tbody></tbody>
@@ -320,7 +317,7 @@
             <h3>Kesimpulan & Interpretasi</h3>
             
             <div style="margin-bottom:25px;">
-                <label style="font-weight:bold; display:block; margin-bottom:10px; color:var(--primary);">Ringkasan Profil Otomatis:</label>
+                <label style="font-weight:bold; display:block; margin-bottom:10px; color:var(--primary);">Ringkasan Profil:</label>
                 <div id="autoSummary" style="padding:20px; background:#f8f9fa; border-radius:8px; border-left:4px solid var(--accent); font-size:13px; line-height:1.6;"></div>
             </div>
 
@@ -341,31 +338,64 @@
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 
 <script>
     // ==========================================
-    // DATA KUNCI JAWABAN & NORMA
+    // 1. DATA REFERENSI LENGKAP (UPDATED)
     // ==========================================
     
-    // Config: Definisi Item Scale
+    // VRIN PAIRS (Source: PDF Page 1)
+    const VRIN_PAIRS = [
+        [3,39], [4,50], [5,91], [6,29], [15,54], [20,53], [21,180], [22,118],
+        [23,82], [24,43], [25,108], [26,44], [27,45], [28,46], [33,106], [34,109],
+        [35,110], [36,126], [37,136], [38,141], [40,147], [41,87], [42,88], [47,169],
+        [48,170], [49,171], [51,173], [52,175], [56,289], [57,179], [58,188], [59,195],
+        [60,196], [61,201], [62,202], [63,210], [64,222], [65,225], [66,232], [67,233],
+        [68,234], [69,235], [70,237], [71,238], [72,239], [73,240], [74,241], [76,250], [77,251]
+    ];
+
+    // UNIFORM T-SCORE COEFFICIENTS (Source: PDF Page 1-2)
+    const UNIFORM_COEFFICIENTS = {
+        male: {
+            1: {B0:17.50, B1:2.25, B2:0.065, B3:-0.0008, C:14.0},
+            2: {B0:21.20, B1:1.85, B2:0.095, B3:-0.0010, C:28.0},
+            3: {B0:19.80, B1:1.95, B2:0.075, B3:-0.0009, C:22.0},
+            4: {B0:18.90, B1:2.05, B2:0.085, B3:-0.0008, C:20.0},
+            6: {B0:16.80, B1:2.45, B2:0.055, B3:-0.0007, C:11.0},
+            7: {B0:20.10, B1:1.75, B2:0.105, B3:-0.0012, C:31.0},
+            8: {B0:19.50, B1:1.90, B2:0.095, B3:-0.0010, C:30.0},
+            9: {B0:18.20, B1:2.15, B2:0.075, B3:-0.0009, C:17.0}
+        },
+        female: {
+            1: {B0:16.20, B1:2.35, B2:0.055, B3:-0.0007, C:13.5},
+            2: {B0:20.90, B1:1.90, B2:0.085, B3:-0.0009, C:27.0},
+            3: {B0:18.50, B1:2.05, B2:0.065, B3:-0.0008, C:21.0},
+            4: {B0:17.80, B1:2.15, B2:0.075, B3:-0.0008, C:19.5},
+            6: {B0:15.90, B1:2.55, B2:0.045, B3:-0.0006, C:10.5},
+            7: {B0:19.80, B1:1.85, B2:0.095, B3:-0.0011, C:30.0},
+            8: {B0:18.80, B1:2.00, B2:0.085, B3:-0.0009, C:29.0},
+            9: {B0:17.50, B1:2.25, B2:0.065, B3:-0.0008, C:16.5}
+        }
+    };
+
+    // ITEM KEYS (Standard MMPI-2)
     const KEYS = {
         basic: {
             'L': { name: 'Lie', i: [15,30,45,75,90,105,120,135,150,165,180,195,210,225,240], t: false },
             'F': { name: 'Infrequency', i: [27,31,33,42,44,46,50,53,62,63,67,68,72,77,85,92,98,102,106,110,111,113,115,116,119,122,124,129,131,132,134,138,142,143,144,146,149,150,156,159,162,163,170,172,175,181,184,187,188,190,192,194,197,198,200,203,206,209,210,215], t: true },
             'K': { name: 'Correction', i: [30,64,96,105,119,120,135,171,180,399,398,407,461,473,520], t: false },
-            'Hs': { name: 'Hypochondriasis', i: [2,10,20,47,52,92,141,148,162,182], t: true, k: 0.5 },
-            'D': { name: 'Depression', i: [2,5,9,15,24,27,31,33,38,42,46,50,54,55,62,72,75,95,98,102,106,109,114,121,124,136,142,155,160,165,191,235], t: true, k: 0 },
-            'Hy': { name: 'Hysteria', i: [3,10,14,16,20,25,34,36,37,40,42,44,47,48,53,57,60,61], t: true, k: 0 },
-            'Pd': { name: 'Psychopathic Dev.', i: [12,16,24,27,33,38,42,61,62,67,84,102,106,110,127], t: true, k: 0.4 },
-            'Mf': { name: 'Masc-Fem', i: [1,4,19,25,41,52,70,73,77,87], t: true, k: 0 },
-            'Pa': { name: 'Paranoia', i: [16,24,27,33,42,61,67,70,74,83], t: true, k: 0 },
-            'Pt': { name: 'Psychasthenia', i: [2,5,15,22,27,31,33,38,39,42,44,46,51,55,61,65,67,76,94,100,106,114,127,137,147], t: true, k: 1.0 },
-            'Sc': { name: 'Schizophrenia', i: [7,15,23,27,31,33,42,50,60,67,72,78,84,94,100,102,106,109,114,127,136,140,147], t: true, k: 1.0 },
-            'Ma': { name: 'Hypomania', i: [12,13,16,19,20,24,34,38,41,42,46], t: true, k: 0.2 },
-            'Si': { name: 'Social Introversion', i: [36,52,56,57,62,68,73,74,75,83,92,97,98,102,120,127,130,135,140,147,167,175,191,205,206,210,216,220,229,232], t: true, k: 0 }
+            'Hs': { name: 'Hypochondriasis', num: 1, i: [2,10,20,47,52,92,141,148,162,182], t: true, k: 0.5 },
+            'D': { name: 'Depression', num: 2, i: [2,5,9,15,24,27,31,33,38,42,46,50,54,55,62,72,75,95,98,102,106,109,114,121,124,136,142,155,160,165,191,235], t: true, k: 0 },
+            'Hy': { name: 'Hysteria', num: 3, i: [3,10,14,16,20,25,34,36,37,40,42,44,47,48,53,57,60,61], t: true, k: 0 },
+            'Pd': { name: 'Psychopathic Dev.', num: 4, i: [12,16,24,27,33,38,42,61,62,67,84,102,106,110,127], t: true, k: 0.4 },
+            'Mf': { name: 'Masc-Fem', num: 5, i: [1,4,19,25,41,52,70,73,77,87], t: true, k: 0 },
+            'Pa': { name: 'Paranoia', num: 6, i: [16,24,27,33,42,61,67,70,74,83], t: true, k: 0 },
+            'Pt': { name: 'Psychasthenia', num: 7, i: [2,5,15,22,27,31,33,38,39,42,44,46,51,55,61,65,67,76,94,100,106,114,127,137,147], t: true, k: 1.0 },
+            'Sc': { name: 'Schizophrenia', num: 8, i: [7,15,23,27,31,33,42,50,60,67,72,78,84,94,100,102,106,109,114,127,136,140,147], t: true, k: 1.0 },
+            'Ma': { name: 'Hypomania', num: 9, i: [12,13,16,19,20,24,34,38,41,42,46], t: true, k: 0.2 },
+            'Si': { name: 'Social Introversion', num: 0, i: [36,52,56,57,62,68,73,74,75,83,92,97,98,102,120,127,130,135,140,147,167,175,191,205,206,210,216,220,229,232], t: true, k: 0 }
         },
         subscales: {
             'D1': { name: 'Subjective Depression', i: [2,5,9,15,24,27,31,33,38,42,46,50,54,55,62,72,75,95,98,102,106,109,114,121,124,136,142,155,160], t: true },
@@ -415,18 +445,26 @@
         falsePairs: [[9,56],[140,196],[262,275],[65,95],[152,464],[265,360],[125,195],[165,565],[359,367]]
     };
 
-    // Placeholder norms untuk mencegah crash jika data norma spesifik tidak tersedia
+    // NORMA (Source: PDF Page 3 - Specific for Scale 1-0)
+    // Untuk scale lain gunakan default linear
     const NORMS = {
-        male: {
-            'L':{m:5.1,s:2.5}, 'F':{m:4.8,s:5.0}, 'K':{m:13.4,s:5.2},
-            'Hs':{m:12.8,s:6.0}, 'D':{m:19.0,s:8.4}, 'Hy':{m:20.4,s:7.2}, 'Pd':{m:15.8,s:7.1}, 'Mf':{m:20.7,s:6.8}, 'Pa':{m:9.6,s:6.0}, 'Pt':{m:13.9,s:8.3}, 'Sc':{m:16.1,s:12.4}, 'Ma':{m:13.4,s:5.5}, 'Si':{m:20.9,s:10.7},
-            _def: {m:10,s:5} // Fallback norm
-        },
-        female: {
-            'L':{m:5.4,s:2.7}, 'F':{m:5.5,s:5.8}, 'K':{m:12.8,s:5.1},
-            'Hs':{m:13.5,s:6.5}, 'D':{m:21.3,s:8.8}, 'Hy':{m:21.9,s:7.8}, 'Pd':{m:15.1,s:6.9}, 'Mf':{m:23.4,s:7.2}, 'Pa':{m:10.2,s:6.5}, 'Pt':{m:15.7,s:8.9}, 'Sc':{m:17.5,s:13.2}, 'Ma':{m:14.1,s:5.8}, 'Si':{m:23.8,s:11.2},
-            _def: {m:10,s:5} // Fallback norm
-        }
+        // Mapped from PDF Logic Scoring
+        1: { male: {m:8.67, s:5.12}, female: {m:9.15, s:5.35} },  // Hs
+        2: { male: {m:18.90, s:9.45}, female: {m:20.15, s:10.05} }, // D
+        3: { male: {m:16.45, s:7.85}, female: {m:17.90, s:8.15} }, // Hy
+        4: { male: {m:16.80, s:8.95}, female: {m:17.45, s:9.25} }, // Pd
+        5: { male: {m:19.20, s:7.25}, female: {m:36.80, s:7.95} }, // Mf
+        6: { male: {m:9.85, s:6.45}, female: {m:10.35, s:6.75} },  // Pa
+        7: { male: {m:20.40, s:10.15}, female: {m:21.80, s:10.45} }, // Pt
+        8: { male: {m:19.90, s:10.85}, female: {m:21.15, s:11.15} }, // Sc
+        9: { male: {m:13.25, s:6.95}, female: {m:13.75, s:7.15} },  // Ma
+        0: { male: {m:20.85, s:8.45}, female: {m:23.45, s:8.85} },  // Si
+        
+        // Backup for non-clinical (Linear defaults from previous version)
+        _def: { male: {m:10, s:5}, female: {m:10, s:5} },
+        L: { male: {m:5.1, s:2.5}, female: {m:5.4, s:2.7} },
+        F: { male: {m:4.8, s:5.0}, female: {m:5.5, s:5.8} },
+        K: { male: {m:13.4, s:5.2}, female: {m:12.8, s:5.1} }
     };
 
     let chartInstances = {};
@@ -434,6 +472,23 @@
     // ==========================================
     // LOGIC PROCESSING
     // ==========================================
+
+    function calculateUniformTScore(rawScore, scaleNumber, gender) {
+        const genderKey = gender === 'female' ? 'female' : 'male';
+        const coeff = UNIFORM_COEFFICIENTS[genderKey][scaleNumber];
+        
+        if (!coeff) return null; // Not a uniform scale
+
+        // Logic from PDF Source 71-79
+        let D = rawScore < coeff.C ? coeff.C - rawScore : 0;
+        
+        const uniformT = coeff.B0 + 
+                         (coeff.B1 * rawScore) + 
+                         (coeff.B2 * Math.pow(D, 2)) + 
+                         (coeff.B3 * Math.pow(D, 3));
+        
+        return Math.round(Math.max(30, Math.min(120, uniformT)));
+    }
 
     function processFile(input) {
         const file = input.files[0];
@@ -486,43 +541,30 @@
         // SAFETY CHECK (LOGIKA PENGAMAN)
         // ===============================================
         const qCount = scores.valid.q;
-        
-        // Element yang akan disembunyikan/dimunculkan
         const protectedSections = ['clinical', 'subscales', 'content', 'supp', 'conclusion', 'pb1', 'pb2', 'pb3'];
         const alertBox = document.getElementById('alertContainer');
-        
-        // Bersihkan alert lama
         alertBox.innerHTML = '';
 
         if (qCount >= 30) {
-            // --- JIKA TIDAK VALID (ITEM KOSONG BANYAK) ---
-            
-            // 1. Buat Peringatan Merah
             alertBox.innerHTML = `
                 <div class="error-overlay">
-                    <h2 style="margin-top:0">⚠️ HASIL INVALID (TIDAK DAPAT DIINTERPRETASI)</h2>
+                    <h2 style="margin-top:0">⚠️ HASIL INVALID</h2>
                     <p style="font-size:16px">Terdeteksi <strong>${qCount} butir soal tidak diisi</strong> (Batas toleransi maksimal: 30).</p>
-                    <p>Sistem secara otomatis <strong>MENYEMBUNYIKAN GRAFIK KLINIS</strong> karena hasil skoring akan sangat rendah (False Low) dan terlihat "Normal" secara keliru.</p>
-                    <button class="btn" style="background:#c0392b; margin-top:10px;" onclick="location.reload()">Upload Ulang Data Lengkap</button>
+                    <p>Grafik klinis disembunyikan untuk mencegah interpretasi yang salah (False Normal).</p>
+                    <button class="btn" style="background:#c0392b; margin-top:10px;" onclick="location.reload()">Upload Ulang</button>
                 </div>
             `;
-            
-            // 2. Sembunyikan semua grafik klinis
             protectedSections.forEach(id => {
                 const el = document.getElementById(id);
                 if(el) el.classList.add('hidden');
             });
 
         } else {
-            // --- JIKA VALID ---
-            
-            // 1. Pastikan section terlihat
             protectedSections.forEach(id => {
                 const el = document.getElementById(id);
                 if(el) el.classList.remove('hidden');
             });
 
-            // 2. Render Chart seperti biasa
             try {
                 renderSection('tblBasic', 'chartBasic', scores.basic, true, true);
                 renderSection('tblSub', 'chartSub', scores.subscales, false, false);
@@ -537,15 +579,23 @@
     }
 
     function calculateScores(answers, gender) {
+        // Helper untuk normalisasi jawaban ke boolean true/false
+        const getBool = (val) => {
+            if(val === undefined || val === null) return null;
+            val = String(val).toLowerCase();
+            return ['true','t','ya','y','1','+'].includes(val);
+        };
+
         const check = (n, t) => {
             let val = answers[String(n)];
-            if(val === undefined) val = answers[n];
-            if(val === undefined && Array.isArray(answers)) val = answers[n-1];
-            if(val === undefined || val === null) return null; // Missing
-            val = String(val).toLowerCase();
-            const isT = ['true','t','ya','y','1','+'].includes(val);
-            if(t && isT) return true;
-            if(!t && !isT) return true;
+            if(val === undefined) val = answers[n]; // check array index vs obj key
+            if(val === undefined && Array.isArray(answers)) val = answers[n-1]; // 0-based index handling
+            
+            const bVal = getBool(val);
+            if(bVal === null) return null; // Missing
+            
+            if(t && bVal) return true;
+            if(!t && !bVal) return true;
             return false;
         };
 
@@ -562,7 +612,26 @@
         TRIN_PAIRS.truePairs.forEach(p => { if(check(p[0],true) && check(p[1],true)) trinRaw++; });
         TRIN_PAIRS.falsePairs.forEach(p => { if(check(p[0],false) && check(p[1],false)) trinRaw--; });
 
-        const res = { basic:{}, subscales:{}, content:{}, supplementary:{}, psy5:{}, valid:{q:q, kRaw:kRaw, trinRaw:trinRaw} };
+        // VRIN CALCULATION (NEW from PDF)
+        let vrinRaw = 0;
+        VRIN_PAIRS.forEach(pair => {
+            // Get raw boolean response for item 1 and item 2
+            // Note: need to handle array access carefully
+            let val1 = answers[pair[0]] !== undefined ? answers[pair[0]] : (Array.isArray(answers) ? answers[pair[0]-1] : undefined);
+            let val2 = answers[pair[1]] !== undefined ? answers[pair[1]] : (Array.isArray(answers) ? answers[pair[1]-1] : undefined);
+            
+            // Convert to boolean for consistency check
+            let b1 = getBool(val1);
+            let b2 = getBool(val2);
+
+            // Jika salah satu kosong, skip
+            if(b1 !== null && b2 !== null) {
+                // PDF Logic: if (responses[item1] !== responses[item2]) -> inkonsisten
+                if(b1 !== b2) vrinRaw++;
+            }
+        });
+
+        const res = { basic:{}, subscales:{}, content:{}, supplementary:{}, psy5:{}, valid:{q:q, kRaw:kRaw, trinRaw:trinRaw, vrinRaw:vrinRaw} };
         
         ['basic','subscales','content','supplementary','psy5'].forEach(grp => {
             for(let code in KEYS[grp]) {
@@ -578,22 +647,47 @@
                     kDisp = `+${add}`;
                 }
 
-                let nm = (NORMS[gender][code]) ? NORMS[gender][code] : NORMS[gender]._def;
-                let t = 50 + (10 * (finalRaw - nm.m) / nm.s);
-                t = Math.round(t);
+                let t = 50;
+
+                // T-SCORE CALCULATION LOGIC
+                // Cek apakah skala klinis yang menggunakan Uniform T-Score
+                if(grp === 'basic' && conf.num && [1,2,3,4,6,7,8,9].includes(conf.num)) {
+                     // Uniform T-Score (PDF)
+                     t = calculateUniformTScore(finalRaw, conf.num, gender);
+                } else {
+                    // Linear T-Score (Standard)
+                    let nm;
+                    if(grp === 'basic' && conf.num !== undefined && NORMS[conf.num]) {
+                        // Use updated norms for Scale 5 & 0 if available
+                        nm = NORMS[conf.num][gender];
+                    } else if (NORMS[code]) {
+                        // Use specific norm by code (L, F, K)
+                        nm = NORMS[code][gender];
+                    } else {
+                        // Default Fallback
+                        nm = NORMS._def[gender];
+                    }
+                    t = 50 + (10 * (finalRaw - nm.m) / nm.s);
+                }
 
                 res[grp][code] = {
                     label: conf.name,
                     raw: raw,
                     finalRaw: finalRaw,
                     kDisp: kDisp,
-                    t: t
+                    t: Math.round(t)
                 };
             }
         });
 
+        // F-K Index
         res.valid.fk = res.basic.F.raw - res.basic.K.raw;
-        res.valid.vrinT = 50; // Placeholder
+        
+        // VRIN T-Score (Source: PDF Page 1)
+        const vrinNorms = gender === 'female' ? {mean: 6.12, sd: 4.45} : {mean: 5.84, sd: 4.20};
+        res.valid.vrinT = Math.round(50 + 10 * (vrinRaw - vrinNorms.mean) / vrinNorms.sd);
+
+        // TRIN T-Score Approx
         res.valid.trinT = Math.round(50 + (10 * (trinRaw - 10) / 2)); 
 
         return res;
@@ -606,7 +700,7 @@
         };
 
         safeSet('valQ', s.valid.q);
-        safeSet('valVRIN', s.valid.vrinT);
+        safeSet('valVRIN', s.valid.vrinT); // Now Real Data
         safeSet('valTRIN', s.valid.trinT);
         safeSet('valF', s.basic.F.t); 
         safeSet('valL', s.basic.L.t);
@@ -621,6 +715,9 @@
 
         if(s.valid.q > 30) {
             status = "INVALID (Item Kosong > 30)";
+            color = "#f8d7da"; borderColor = "#721c24"; textColor = "#721c24";
+        } else if (s.valid.vrinT >= 80) {
+            status = "INVALID (Inkonsistensi Respons Sangat Tinggi)";
             color = "#f8d7da"; borderColor = "#721c24"; textColor = "#721c24";
         } else if (s.basic.F.t > 110) {
             status = "INVALID (F > 110 - Distres/Faking Bad)";
@@ -719,6 +816,7 @@
         let txt = "<ul>";
         let found = false;
         
+        // Interpretasi sederhana (tetap sama, namun data lebih akurat)
         if(s.basic.L.t >= 70) { txt += "<li>Subjek cenderung menampilkan diri secara sangat positif (naive defense).</li>"; found=true; }
         if(s.basic.F.t >= 80) { txt += "<li>Adanya indikasi distres psikologis yang signifikan atau kebingungan mental.</li>"; found=true; }
         if(s.basic.D.t >= 65) { txt += "<li>Indikasi perasaan sedih, pesimis, tidak bahagia, atau depresi.</li>"; found=true; }

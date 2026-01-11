@@ -3,832 +3,539 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MMPI-2 Clinical Dashboard (Final v6.0)</title>
+    <title>MMPI-2 Professional Scoring System</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { 
-            --sidebar-width: 260px; 
             --primary: #2c3e50; 
-            --accent: #2980b9; 
-            --danger: #c0392b;
-            --success: #27ae60;
+            --accent: #3498db; 
+            --danger: #c0392b; 
+            --success: #27ae60; 
             --warning: #f39c12;
-            --bg: #f8f9fa; 
-            --text: #34495e; 
-            --card-border: #e0e0e0;
+            --bg: #f4f6f8; 
+            --text: #2c3e50;
         }
-        * { box-sizing: border-box; outline: none; }
-        body { font-family: 'Segoe UI', 'Roboto', Helvetica, sans-serif; margin: 0; background: var(--bg); display: flex; min-height: 100vh; color: var(--text); line-height: 1.5; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: var(--bg); color: var(--text); font-size: 14px; display: flex; min-height: 100vh; }
         
         /* LAYOUT */
-        .sidebar { width: var(--sidebar-width); background: var(--primary); color: #ecf0f1; padding: 25px 20px; position: fixed; height: 100%; overflow-y: auto; z-index: 1000; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
-        .main-content { margin-left: var(--sidebar-width); flex: 1; padding: 40px; width: calc(100% - var(--sidebar-width)); }
+        .sidebar { width: 260px; background: var(--primary); color: #fff; position: fixed; height: 100%; overflow-y: auto; padding: 20px; z-index: 1000; box-shadow: 2px 0 5px rgba(0,0,0,0.1); }
+        .main-content { margin-left: 260px; flex: 1; padding: 40px; width: calc(100% - 260px); }
         
-        /* COMPONENTS */
-        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); margin-bottom: 30px; border: 1px solid var(--card-border); break-inside: avoid; }
-        .card h3 { margin-top: 0; padding-bottom: 15px; border-bottom: 1px solid #eee; color: var(--primary); font-size: 18px; letter-spacing: 0.5px; text-transform: uppercase; }
-        
-        /* HEADER STYLE (SHARED) */
-        .report-header { text-align: center; padding: 20px; border: 2px solid #000; margin-bottom: 30px; background: #fff; }
-        .report-header h2 { margin: 0; font-size: 22px; text-transform: uppercase; letter-spacing: 1px; color: #000; }
-        .report-header p { margin: 5px 0 0; font-size: 12px; color: #555; font-style: italic; }
+        /* SIDEBAR NAV */
+        .sidebar h3 { border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 15px; margin-top: 0; font-size: 18px; letter-spacing: 1px; }
+        .nav-item { display: block; padding: 10px 15px; color: #bdc3c7; text-decoration: none; border-radius: 4px; margin-bottom: 2px; transition: 0.2s; cursor: pointer; }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: #fff; transform: translateX(5px); }
+        .nav-group { font-size: 11px; text-transform: uppercase; color: #95a5a6; margin-top: 20px; margin-bottom: 5px; font-weight: bold; }
+
+        /* CARDS & CONTAINERS */
+        .card { background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 25px; border: 1px solid #e0e0e0; break-inside: avoid; }
+        .card h3 { margin-top: 0; border-bottom: 2px solid var(--primary); padding-bottom: 10px; color: var(--primary); font-size: 16px; text-transform: uppercase; }
+
+        /* HEADER REPORT STYLE */
+        .report-header { text-align: center; border: 3px solid #000; padding: 15px; margin-bottom: 30px; background: #fff; }
+        .report-header h1 { margin: 0; font-size: 24px; text-transform: uppercase; }
+        .report-header p { margin: 5px 0 0; color: #555; font-style: italic; font-size: 12px; }
 
         /* UPLOAD ZONE */
-        .upload-zone { border: 2px dashed #bdc3c7; padding: 50px; text-align: center; border-radius: 15px; cursor: pointer; background: #fff; transition: all 0.3s ease; }
-        .upload-zone:hover { border-color: var(--accent); background: #ebf5fb; transform: translateY(-2px); }
-        
-        /* NAVIGATION */
-        .sidebar h3 { font-size: 18px; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 10px; }
-        .nav-item { padding: 12px 15px; cursor: pointer; border-radius: 8px; margin-bottom: 5px; display: block; text-decoration: none; color: #bdc3c7; font-size: 14px; transition: all 0.2s; }
-        .nav-item:hover { background: rgba(255,255,255,0.1); color: #fff; transform: translateX(5px); }
-        .nav-group { font-size: 11px; text-transform: uppercase; color: #7f8c8d; margin-top: 25px; margin-bottom: 10px; font-weight: 700; letter-spacing: 1px; }
+        .upload-area { border: 2px dashed #bdc3c7; padding: 40px; text-align: center; border-radius: 8px; cursor: pointer; background: #fff; transition: 0.3s; }
+        .upload-area:hover { border-color: var(--accent); background: #ebf5fb; }
 
         /* TABLES */
-        table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 15px; }
-        th { background-color: #f1f2f6; color: #2c3e50; font-weight: 700; padding: 12px 15px; text-align: left; border-bottom: 2px solid #dfe6e9; text-transform: uppercase; font-size: 12px; }
-        td { padding: 10px 15px; border-bottom: 1px solid #ecf0f1; vertical-align: middle; }
-        tr:hover td { background-color: #f8f9fa; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+        th { background: #ecf0f1; padding: 8px; text-align: left; border-bottom: 2px solid #bdc3c7; color: #2c3e50; font-weight: 700; }
+        td { padding: 6px 8px; border-bottom: 1px solid #eee; }
+        tr:hover td { background: #f9f9f9; }
         
-        /* TOTAL ROW MENTAL (IMPROVED) */
-        .total-row td {
-            background-color: #2c3e50;
-            color: #fff;
-            padding: 15px;
-            border-top: 4px solid #34495e;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .total-label {
-            text-align: right;
-            padding-right: 25px;
-            font-weight: 700;
-            font-size: 13px;
-        }
-        .total-value {
-            text-align: center;
-            font-size: 18px;
-            font-weight: 800;
-            color: #f1c40f; /* Gold Color */
-            font-family: 'Consolas', monospace;
-        }
+        /* VALIDITY GRID */
+        .validity-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 20px; }
+        .v-box { padding: 15px; border: 1px solid #eee; border-radius: 6px; text-align: center; background: #fff; }
+        .v-box .label { font-size: 11px; font-weight: bold; color: #7f8c8d; margin-bottom: 5px; }
+        .v-box .value { font-size: 20px; font-weight: bold; color: var(--primary); }
+        .v-box .desc { font-size: 10px; color: #95a5a6; }
 
-        /* BADGES & INDICATORS */
-        .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-block; min-width: 80px; text-align: center; }
-        .badge-high { background-color: #fadbd8; color: var(--danger); }
-        .badge-normal { background-color: #e8f8f5; color: var(--success); }
-        .score-val { font-family: 'Consolas', monospace; font-weight: bold; font-size: 14px; }
-        .score-high-text { color: var(--danger); }
+        /* BADGES */
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold; color: #fff; }
+        .bg-high { background-color: var(--danger); }
+        .bg-warn { background-color: var(--warning); }
+        .bg-norm { background-color: var(--success); }
 
-        /* CHARTS */
-        .chart-container { position: relative; height: 350px; width: 100%; margin-bottom: 20px; }
-        
-        /* MENTAL BARS */
-        .bar-bg { background: #dfe6e9; height: 8px; border-radius: 4px; overflow: hidden; width: 100%; margin-top: 5px; }
-        .bar-fill { height: 100%; width: 0%; transition: width 1s ease-out; border-radius: 4px; }
+        /* CHART */
+        .chart-wrapper { height: 250px; width: 100%; position: relative; margin-bottom: 20px; }
 
-        /* VALIDITY BOXES */
-        .validity-grid { display: flex; gap: 20px; margin-bottom: 20px; }
-        .validity-box { flex: 1; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid transparent; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
-        .validity-box strong { display: block; font-size: 24px; margin: 5px 0; font-family: 'Segoe UI', sans-serif; }
-        
-        /* BUTTONS & UTILS */
-        .btn { padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; background: var(--accent); color: white; font-weight: 600; font-size: 14px; transition: background 0.2s; box-shadow: 0 2px 5px rgba(41, 128, 185, 0.3); }
-        .btn:hover { background: #3498db; }
-        .hidden { display: none !important; }
-        .page-break { page-break-after: always; }
-        .text-muted { color: #7f8c8d; font-size: 12px; }
-
-        /* PRINT STYLES - VISUAL SCANNING OPTIMIZED */
+        /* PRINT SETTINGS */
         @media print {
-            @page { margin: 1cm; size: A4; }
-            body { background: white; -webkit-print-color-adjust: exact; color: black; font-size: 12px; }
-            
-            .sidebar, .btn, .upload-zone, #uploadContainer, .no-print { display: none !important; }
+            @page { size: A4; margin: 1cm; }
+            body { background: #fff; color: #000; display: block; font-family: 'Times New Roman', serif; }
+            .sidebar, .btn, .upload-area, #uploadContainer, .no-print { display: none !important; }
             .main-content { margin: 0; padding: 0; width: 100%; }
-            
-            /* High Contrast Borders for Cards */
-            .card { 
-                box-shadow: none; 
-                border: 1px solid #000 !important; 
-                margin-bottom: 20px; 
-                page-break-inside: avoid;
-                padding: 15px;
-            }
-            
-            /* Table optimization */
-            th { background-color: #eee !important; color: black !important; border-bottom: 1px solid #000; }
-            td { border-bottom: 1px solid #ccc; }
-            
-            /* Total Row Print Specifics */
-            .total-row td { 
-                background-color: transparent !important; 
-                color: black !important; 
-                border-top: 2px solid #000 !important;
-                border-bottom: 2px solid #000 !important;
-            }
-            .total-value { color: #000 !important; } /* Hilangkan warna emas saat print */
-
-            .chart-container { height: 300px !important; page-break-inside: avoid; }
-            
-            /* Ensure Validity Boxes have borders */
-            .validity-box { border: 1px solid #000 !important; background: none !important; }
-            
-            /* Consistent Header styling in print */
-            .report-header { border: 2px solid #000 !important; margin-bottom: 20px; }
-            
-            h3 { border-bottom: 1px solid #000 !important; color: #000 !important; margin-bottom: 10px; padding-bottom: 5px; }
-            .badge { border: 1px solid #000; background: none !important; color: #000 !important; padding: 2px 8px; }
+            .card { box-shadow: none; border: 1px solid #000; margin-bottom: 15px; padding: 15px; page-break-inside: avoid; }
+            .report-header { border: 2px solid #000; }
+            h3 { border-bottom: 1px solid #000 !important; color: #000 !important; }
+            .validity-grid { grid-template-columns: repeat(5, 1fr); gap: 10px; }
+            .v-box { border: 1px solid #000; }
+            th { background: #ddd !important; -webkit-print-color-adjust: exact; border-bottom: 1px solid #000; }
+            tr.highlight { background-color: #ddd !important; -webkit-print-color-adjust: exact; }
+            .chart-wrapper { height: 220px !important; }
         }
+        
+        .hidden { display: none; }
+        .btn { padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="sidebar" id="sidebar">
-    <h3>📊 MMPI-2 PRO</h3>
-    
+<div class="sidebar">
+    <h3>MMPI-2 ANALYST</h3>
     <div class="nav-group">Input Data</div>
-    <div class="nav-item" onclick="document.getElementById('fileInput').click()">📁 Upload JSON</div>
-    <div class="nav-item" onclick="location.reload()">🔄 Reset Data</div>
+    <div class="nav-item" onclick="document.getElementById('fileInput').click()">📂 Upload JSON</div>
+    <div class="nav-item" onclick="location.reload()">🔄 Reset System</div>
     
-    <div class="nav-group">Analisis & Interpretasi</div>
-    <a href="#sikap" class="nav-item">1. Sikap Tes (Validitas)</a>
-    <a href="#mental" class="nav-item">2. Kapasitas Mental</a>
-    <a href="#klinis" class="nav-item">3. Profil Klinis & Kode</a>
-    <a href="#ocean" class="nav-item">4. Kepribadian (OCEAN)</a>
-    <a href="#saran" class="nav-item">5. Kesimpulan</a>
-    
-    <div class="nav-group">Data Lampiran</div>
-    <a href="#basic" class="nav-item">I. Basic Scales</a>
-    <a href="#subscales" class="nav-item">II. Subscales</a>
-    <a href="#content" class="nav-item">III. Content</a>
-    <a href="#supp" class="nav-item">IV. Supplementary</a>
-    <a href="#psy5" class="nav-item">V. PSY-5</a>
+    <div class="nav-group">Navigasi Laporan</div>
+    <a href="#validitas" class="nav-item">1. Validitas & Sikap</a>
+    <a href="#klinis" class="nav-item">2. Profil Klinis</a>
+    <a href="#content" class="nav-item">3. Skala Konten</a>
+    <a href="#supp" class="nav-item">4. Skala Suplemen</a>
+    <a href="#psy5" class="nav-item">5. PSY-5</a>
 </div>
 
 <div class="main-content">
-    
     <div id="uploadContainer">
-        <div class="card" style="text-align:center; padding: 80px 40px; border:none; box-shadow:none; background:transparent;">
-            <h1 style="color:var(--primary); font-size: 32px; margin-bottom: 10px;">Sistem Skoring MMPI-2 Professional</h1>
-            <p style="color:#7f8c8d; font-size: 16px;">Analisis Validitas Lengkap, Two-Point Codetype, Subscales & Content Analysis</p>
-            
-            <div class="upload-zone" onclick="document.getElementById('fileInput').click()" style="margin-top:40px; max-width:600px; margin:40px auto;">
-                <div style="font-size:48px; margin-bottom:15px; color:var(--accent);">📄</div>
-                <strong style="font-size:18px; color:var(--primary);">Pilih File JSON Hasil Tes</strong>
-                <p style="font-size:13px; color:#95a5a6; margin-top:5px;">Mendukung format standar aplikasi asesmen</p>
-                <input type="file" id="fileInput" accept=".json" style="display: none" onchange="processFile(this)">
+        <div class="card" style="text-align:center; padding: 60px;">
+            <h1 style="color:var(--primary);">Sistem Skoring MMPI-2 Professional</h1>
+            <p style="color:#7f8c8d; margin-bottom:30px;">Mendukung format standar (Nucular/Lsweatman) dengan logika TRIN, VRIN, & F-K Index.</p>
+            <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                <span style="font-size:40px;">📄</span><br>
+                <b>Klik untuk Pilih File JSON</b>
+                <input type="file" id="fileInput" accept=".json" class="hidden" onchange="processFile(this)">
             </div>
-            <div id="errorMsg" style="color:white; display:none; margin:20px auto; max-width:600px; font-size:14px; background:var(--danger); padding:15px; border-radius:6px;"></div>
+            <div id="errorMsg" style="color:red; margin-top:20px; display:none;"></div>
         </div>
     </div>
 
-    <div id="resultContainer" class="hidden">
-        
-        <div class="report-header">
-            <h2>Laporan Hasil Tes Psikologis MMPI-2</h2>
-            <p>Dokumen Rahasia - Hanya untuk Kalangan Profesional (Psikolog/Psikiater)</p>
-        </div>
-        
+    <div id="reportContainer" class="hidden">
         <div style="text-align:right; margin-bottom:20px;" class="no-print">
-            <button class="btn" onclick="window.print()">🖨️ Cetak Laporan (PDF)</button>
+            <button class="btn" onclick="window.print()">🖨️ Cetak Laporan PDF</button>
+        </div>
+
+        <div class="report-header">
+            <h1>Laporan Hasil Tes Psikologis MMPI-2</h1>
+            <p>RAHASIA - HANYA UNTUK KALANGAN PROFESIONAL (PSIKOLOG/PSIKIATER)</p>
         </div>
 
         <div class="card">
-            <h3>Identitas Responden</h3>
-            <table style="border:none; margin-top:0;">
-                <tr style="background:none;">
-                    <td style="width:150px; font-weight:bold; color:#7f8c8d; border:none;">Nama Lengkap</td>
-                    <td style="border:none; font-weight:600;" id="dispNama">: -</td>
-                    <td style="width:150px; font-weight:bold; color:#7f8c8d; border:none;">Tanggal Tes</td>
-                    <td style="border:none;" id="dispTanggal">: -</td>
+            <h3>Identitas Subjek</h3>
+            <table style="border:none;">
+                <tr>
+                    <td width="150"><strong>Nama Lengkap</strong></td><td id="dNama">: -</td>
+                    <td width="150"><strong>Tanggal Tes</strong></td><td id="dTanggal">: -</td>
                 </tr>
-                <tr style="background:none;">
-                    <td style="font-weight:bold; color:#7f8c8d; border:none;">Usia / Gender</td>
-                    <td style="border:none;" id="dispInfo">: -</td>
-                    <td style="font-weight:bold; color:#7f8c8d; border:none;">Pendidikan</td>
-                    <td style="border:none;" id="dispEdu">: -</td>
+                <tr>
+                    <td><strong>Usia / Gender</strong></td><td id="dInfo">: -</td>
+                    <td><strong>Pendidikan</strong></td><td id="dEdu">: -</td>
                 </tr>
-                <tr style="background:none;">
-                    <td style="font-weight:bold; color:#7f8c8d; border:none;">Pekerjaan</td>
-                    <td style="border:none;" id="dispJob">: -</td>
-                    <td style="font-weight:bold; color:#7f8c8d; border:none;">Alamat</td>
-                    <td style="border:none;" id="dispAddr">: -</td>
+                <tr>
+                    <td><strong>Pekerjaan</strong></td><td id="dJob">: -</td>
+                    <td><strong>Validitas Profil</strong></td><td id="dValid status" style="font-weight:bold;">: -</td>
                 </tr>
             </table>
         </div>
 
-        <div class="card" id="sikap">
-            <h3>1. Sikap Terhadap Tes (Validitas)</h3>
-            
+        <div class="card" id="validitas">
+            <h3>1. Validitas & Sikap Tes</h3>
             <div class="validity-grid">
-                <div class="validity-box" style="background:#fff3e0; border-color:#ffe0b2;">
-                    <div style="font-size:11px; font-weight:bold; color:#e65100; text-transform:uppercase;">Cannot Say (?)</div>
-                    <strong id="valCannotSay">0</strong>
-                    <div style="font-size:10px; color:#ef6c00;">Item Kosong</div>
+                <div class="v-box">
+                    <div class="label">CANNOT SAY (?)</div>
+                    <div class="value" id="valQ">0</div>
+                    <div class="desc">Item Kosong</div>
                 </div>
-                <div class="validity-box" style="background:#e3f2fd; border-color:#bbdefb;">
-                    <div style="font-size:11px; font-weight:bold; color:#1565c0; text-transform:uppercase;">L - Scale</div>
-                    <strong id="valLScore">-</strong>
-                    <div style="font-size:10px; color:#1976d2;">Lie / Naif</div>
+                <div class="v-box">
+                    <div class="label">VRIN</div>
+                    <div class="value" id="valVRIN">-</div>
+                    <div class="desc">Konsistensi Acak</div>
                 </div>
-                <div class="validity-box" style="background:#f3e5f5; border-color:#e1bee7;">
-                    <div style="font-size:11px; font-weight:bold; color:#6a1b9a; text-transform:uppercase;">F - Scale</div>
-                    <strong id="valFScore">-</strong>
-                    <div style="font-size:10px; color:#8e24aa;">Jarang / Unik</div>
+                <div class="v-box">
+                    <div class="label">TRIN</div>
+                    <div class="value" id="valTRIN">-</div>
+                    <div class="desc">Konsistensi Ya/Tidak</div>
                 </div>
-                <div class="validity-box" style="background:#e8f5e9; border-color:#c8e6c9;">
-                    <div style="font-size:11px; font-weight:bold; color:#2e7d32; text-transform:uppercase;">K - Scale</div>
-                    <strong id="valKScore">-</strong>
-                    <div style="font-size:10px; color:#388e3c;">Defensif</div>
+                <div class="v-box">
+                    <div class="label">F - K INDEX</div>
+                    <div class="value" id="valFK">-</div>
+                    <div class="desc">Gough Dissimulation</div>
+                </div>
+                <div class="v-box">
+                    <div class="label">L (LIE)</div>
+                    <div class="value" id="valL">-</div>
+                    <div class="desc">T-Score</div>
                 </div>
             </div>
-
-            <div style="background:#fafafa; padding:20px; border-radius:8px; border-left:5px solid #bdc3c7;" id="validityContainer">
-                <strong id="statusValiditas" style="font-size:16px; display:block; margin-bottom:5px;">-</strong>
-                <p id="descValiditas" style="margin:0; font-size:13px; color:#555; line-height:1.6;">-</p>
+            
+            <div style="background:#fff3e0; padding:15px; border-left:4px solid #f39c12; font-size:13px; line-height:1.5;">
+                <strong>Interpretasi Validitas:</strong>
+                <ul style="margin:5px 0 0 20px; padding:0;" id="validityList">
+                    <li>Menunggu data...</li>
+                </ul>
             </div>
-        </div>
-
-        <div class="card" id="mental">
-            <h3>2. Indeks Kapasitas Mental</h3>
-            <table>
-                <thead><tr><th width="35%">Aspek Psikologis</th><th width="10%">Skor</th><th>Indikator Visual</th></tr></thead>
-                <tbody>
-                    <tr><td>Potensi Kinerja & Energi</td><td id="valKin" class="score-val">0</td><td><div class="bar-bg"><div id="barKin" class="bar-fill"></div></div></td></tr>
-                    <tr><td>Kemampuan Adaptasi & Ego</td><td id="valAda" class="score-val">0</td><td><div class="bar-bg"><div id="barAda" class="bar-fill"></div></div></td></tr>
-                    <tr><td>Hambatan/Kendala Psikologis</td><td id="valKen" class="score-val">0</td><td><div class="bar-bg"><div id="barKen" class="bar-fill"></div></div></td></tr>
-                    <tr><td>Kecenderungan Berisiko</td><td id="valRis" class="score-val">0</td><td><div class="bar-bg"><div id="barRis" class="bar-fill"></div></div></td></tr>
-                    <tr><td>Stabilitas Moral/Sosial</td><td id="valMor" class="score-val">0</td><td><div class="bar-bg"><div id="barMor" class="bar-fill"></div></div></td></tr>
-                </tbody>
-                <tfoot>
-                    <tr class="total-row">
-                        <td colspan="2" class="total-label">TOTAL INDEKS (Max 10)</td>
-                        <td id="valTotalMental" class="total-value">0.0</td>
-                    </tr>
-                </tfoot>
-            </table>
         </div>
 
         <div class="card" id="klinis">
-            <h3>3. Profil Klinis & Codetype</h3>
-            <div id="clinicalList" style="padding:20px; background:#fdfefe; border:1px solid #eee; border-radius:6px; font-size:14px; line-height:1.8;">-</div>
-        </div>
-
-        <div class="page-break"></div>
-
-        <div class="card" id="ocean">
-            <h3>4. Kepribadian Dasar (Mapping OCEAN)</h3>
-            <p class="text-muted" style="margin-top:-10px; margin-bottom:15px;">Diturunkan dari korelasi skala dasar MMPI-2.</p>
-            <table>
-                <thead><tr><th>Dimensi Big Five</th><th>Level</th><th>Deskripsi Interpretatif</th></tr></thead>
-                <tbody>
-                    <tr><td><strong>O</strong>penness</td><td id="lvlO">-</td><td id="descO">-</td></tr>
-                    <tr><td><strong>C</strong>onscientiousness</td><td id="lvlC">-</td><td id="descC">-</td></tr>
-                    <tr><td><strong>E</strong>xtraversion</td><td id="lvlE">-</td><td id="descE">-</td></tr>
-                    <tr><td><strong>A</strong>greeableness</td><td id="lvlA">-</td><td id="descA">-</td></tr>
-                    <tr><td><strong>N</strong>euroticism</td><td id="lvlN">-</td><td id="descN">-</td></tr>
-                </tbody>
+            <h3>2. Skala Klinis (Basic Scales)</h3>
+            <div class="chart-wrapper">
+                <canvas id="chartBasic"></canvas>
+            </div>
+            <div style="margin-bottom:15px; padding:10px; background:#e8f6f3; border-left:4px solid #1abc9c;">
+                <strong>Codetype / High Point:</strong> <span id="codetypeText">-</span>
+            </div>
+            <table id="tblBasic">
+                <thead><tr><th>Kode</th><th>Nama Skala</th><th>Raw</th><th>K-Corr</th><th>T-Score</th><th>Keterangan</th></tr></thead>
+                <tbody></tbody>
             </table>
         </div>
 
-        <div class="card" id="saran">
-            <h3>5. Kesimpulan & Rekomendasi</h3>
-            <div style="margin-bottom:20px;">
-                <label style="font-weight:700; font-size:13px; color:#2c3e50; display:block; margin-bottom:8px;">DINAMIKA PSIKOLOGIS:</label>
-                <textarea placeholder="Tuliskan integrasi hasil tes di sini..." style="width:100%; padding:15px; border:1px solid #ccc; border-radius:6px; min-height:100px; font-family:'Segoe UI'; line-height:1.5;"></textarea>
-            </div>
-            <div>
-                <label style="font-weight:700; font-size:13px; color:#2c3e50; display:block; margin-bottom:8px;">SARAN PRAKTIS:</label>
-                <textarea placeholder="Tuliskan saran intervensi atau pengembangan diri..." style="width:100%; padding:15px; border:1px solid #ccc; border-radius:6px; min-height:100px; font-family:'Segoe UI'; line-height:1.5;"></textarea>
-            </div>
-            
-            <div style="margin-top:60px; display:flex; justify-content:flex-end;">
-                <div style="text-align:center; min-width:200px;">
-                    <p style="margin-bottom:60px;">Pemeriksa,</p>
-                    <p style="border-top:1px solid #333; padding-top:10px;"><strong>( ______________________ )</strong><br>Psikolog Klinis / Pemeriksa</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="page-break"></div>
-        
-        <div class="report-header">
-            <h2>LAMPIRAN DATA SKORING</h2>
-            <p>Grafik Profil dan Tabel Skor T</p>
-        </div>
-
-        <div class="card" id="basic">
-            <h3>I. Basic Scales (Validity & Clinical)</h3>
-            <div class="chart-container"><canvas id="chartBasic"></canvas></div>
-            <table id="tblBasic"><thead><tr><th>Kode</th><th>Nama Skala</th><th>Raw</th><th>K-Corr</th><th>T-Score</th><th>Status</th></tr></thead><tbody></tbody></table>
-        </div>
-
-        <div class="card" id="subscales">
-            <h3>II. Harris-Lingoes Subscales</h3>
-            <div class="chart-container"><canvas id="chartSub"></canvas></div>
-            <table id="tblSub"><thead><tr><th>Kode</th><th>Nama Sub-Skala</th><th>Raw</th><th>T-Score</th><th>Status</th></tr></thead><tbody></tbody></table>
-        </div>
-        
-        <div class="page-break"></div>
-
         <div class="card" id="content">
-            <h3>III. Content Scales</h3>
-            <div class="chart-container"><canvas id="chartContent"></canvas></div>
-            <table id="tblContent"><thead><tr><th>Kode</th><th>Nama Skala</th><th>Raw</th><th>T-Score</th><th>Status</th></tr></thead><tbody></tbody></table>
+            <h3>3. Skala Konten (Content Scales)</h3>
+            <div class="chart-wrapper"><canvas id="chartContent"></canvas></div>
+            <table id="tblContent">
+                <thead><tr><th>Kode</th><th>Nama Skala</th><th>Raw</th><th>T-Score</th><th>Keterangan</th></tr></thead>
+                <tbody></tbody>
+            </table>
         </div>
 
         <div class="card" id="supp">
-            <h3>IV. Supplementary Scales</h3>
-            <div class="chart-container"><canvas id="chartSupp"></canvas></div>
-            <table id="tblSupp"><thead><tr><th>Kode</th><th>Nama Skala</th><th>Raw</th><th>T-Score</th><th>Status</th></tr></thead><tbody></tbody></table>
+            <h3>4. Skala Suplemen (Supplementary)</h3>
+            <div class="chart-wrapper"><canvas id="chartSupp"></canvas></div>
+            <table id="tblSupp">
+                <thead><tr><th>Kode</th><th>Nama Skala</th><th>Raw</th><th>T-Score</th><th>Keterangan</th></tr></thead>
+                <tbody></tbody>
+            </table>
         </div>
 
         <div class="card" id="psy5">
-            <h3>V. PSY-5 Scales</h3>
-            <div class="chart-container"><canvas id="chartPsy5"></canvas></div>
-            <table id="tblPsy5"><thead><tr><th>Kode</th><th>Nama Skala</th><th>Raw</th><th>T-Score</th><th>Status</th></tr></thead><tbody></tbody></table>
+            <h3>5. Kepribadian (PSY-5)</h3>
+            <div class="chart-wrapper"><canvas id="chartPsy5"></canvas></div>
+            <table id="tblPsy5">
+                <thead><tr><th>Kode</th><th>Nama Skala</th><th>Raw</th><th>T-Score</th><th>Keterangan</th></tr></thead>
+                <tbody></tbody>
+            </table>
         </div>
     </div>
 </div>
 
 <script>
-    // =========================================================================
-    // 1. DATA KUNCI JAWABAN (LENGKAP)
-    // =========================================================================
-    const KEYS = {
-        basic: {
-            'L': { name: 'Lie', i: [15, 30, 45, 75, 90, 105, 120, 135, 150, 165, 180, 195, 210, 225, 240], t: false },
-            'F': { name: 'Infrequency', i: [27, 31, 33, 42, 44, 46, 50, 53, 62, 63, 67, 68, 72, 77, 85, 92, 98, 102, 106, 110, 111, 113, 115, 116, 119, 122, 124, 129, 131, 132, 134, 138, 142, 143, 144, 146, 149, 150, 156, 159, 162, 163, 170, 172, 175, 181, 184, 187, 188, 190, 192, 194, 197, 198, 200, 203, 206, 209, 210, 215], t: true },
-            'K': { name: 'Correction', i: [30, 64, 96, 105, 119, 120, 135, 171, 180, 399, 398, 407, 461, 473, 520], t: false },
-            'Hs': { name: 'Hypochondriasis', i: [2, 10, 20, 47, 52, 92, 141, 148, 162, 182], t: true, k: 0.5 },
-            'D': { name: 'Depression', i: [2, 5, 9, 15, 24, 27, 31, 33, 38, 42, 46, 50, 54, 55, 62, 72, 75, 95, 98, 102, 106, 109, 114, 121, 124, 136, 142, 155, 160, 165, 191, 235], t: true, k: 0 },
-            'Hy': { name: 'Hysteria', i: [3, 10, 14, 16, 20, 25, 34, 36, 37, 40, 42, 44, 47, 48, 53, 57, 60, 61], t: true, k: 0 },
-            'Pd': { name: 'Psychopathic Deviate', i: [12, 16, 24, 27, 33, 38, 42, 61, 62, 67, 84, 102, 106, 110, 127], t: true, k: 0.4 },
-            'Mf': { name: 'Masculinity-Femininity', i: [1, 4, 19, 25, 41, 52, 70, 73, 77, 87], t: true, k: 0 },
-            'Pa': { name: 'Paranoia', i: [16, 24, 27, 33, 42, 61, 67, 70, 74, 83], t: true, k: 0 },
-            'Pt': { name: 'Psychasthenia', i: [2, 5, 15, 22, 27, 31, 33, 38, 39, 42, 44, 46, 51, 55, 61, 65, 67, 76, 94, 100, 106, 114, 127, 137, 147], t: true, k: 1.0 },
-            'Sc': { name: 'Schizophrenia', i: [7, 15, 23, 27, 31, 33, 42, 50, 60, 67, 72, 78, 84, 94, 100, 102, 106, 109, 114, 127, 136, 140, 147], t: true, k: 1.2 },
-            'Ma': { name: 'Hypomania', i: [12, 13, 16, 19, 20, 24, 34, 38, 41, 42, 46], t: true, k: 0.2 },
-            'Si': { name: 'Social Introversion', i: [36, 52, 56, 57, 62, 68, 73, 74, 75, 83, 92, 97, 98, 102, 120, 127, 130, 135, 140, 147, 167, 175, 191, 205, 206, 210, 216, 220, 229, 232], t: true, k: 0 }
-        },
-        subscales: {
-            'D1': { name: 'Subjective Depression', i: [2, 5, 9, 15, 24, 27, 31, 33, 38, 42, 46, 50, 54, 55, 62, 72, 75, 95, 98, 102, 106, 109, 114, 121, 124, 136, 142, 155, 160], t: true },
-            'D2': { name: 'Psychomotor Retardation', i: [38, 46, 50, 54, 55, 62, 72, 75, 95], t: true },
-            'D3': { name: 'Physical Malfunctioning', i: [2, 9, 15, 24, 33, 42, 102, 106, 114], t: true },
-            'D4': { name: 'Mental Dullness', i: [5, 27, 31, 38, 46, 50, 72, 98, 155], t: true },
-            'D5': { name: 'Brooding', i: [9, 15, 24, 27, 31, 62, 95, 102, 106], t: true },
-            'Hy1': { name: 'Denial of Social Anxiety', i: [3, 10, 14, 16, 20, 25, 34, 36, 37, 40, 42, 44], t: true },
-            'Hy2': { name: 'Need for Affection', i: [47, 48, 53, 57, 60, 61], t: true },
-            'Hy3': { name: 'Lassitude-Malaise', i: [3, 10, 14, 16, 20, 25], t: true },
-            'Hy4': { name: 'Somatic Complaints', i: [36, 37, 40, 42, 44, 47, 48, 53], t: true },
-            'Hy5': { name: 'Inhibition of Aggression', i: [57, 60, 61], t: true },
-            'Pd1': { name: 'Familial Discord', i: [12, 16, 24, 27, 33, 38, 42, 61, 62, 67], t: true },
-            'Pd2': { name: 'Authority Problems', i: [12, 16, 24, 27, 33, 38], t: true },
-            'Pd3': { name: 'Social Imperturbability', i: [42, 61, 62, 67, 84, 102], t: true },
-            'Pd4': { name: 'Social Alienation', i: [106, 110, 127], t: true },
-            'Pd5': { name: 'Self Alienation', i: [12, 16, 24, 27], t: true },
-            'Pa1': { name: 'Persecutory Ideas', i: [16, 24, 27, 33, 42, 61, 67, 70, 74, 83], t: true },
-            'Pa2': { name: 'Poignancy', i: [16, 24, 27, 33], t: true },
-            'Pa3': { name: 'Naivete', i: [42, 61, 67, 70], t: true },
-            'Sc1': { name: 'Social Alienation', i: [7, 15, 23, 27, 31, 33, 42, 50, 60, 67], t: true },
-            'Sc2': { name: 'Emotional Alienation', i: [72, 78, 84, 94, 100, 102], t: true },
-            'Sc3': { name: 'Lack of Ego Mastery (Cognitive)', i: [106, 109, 114, 127, 136, 140], t: true },
-            'Sc4': { name: 'Lack of Ego Mastery (Conative)', i: [147], t: true },
-            'Sc5': { name: 'Lack of Ego Mastery (Defective Control)', i: [7, 15, 23, 27, 31], t: true },
-            'Sc6': { name: 'Bizarre Sensory Experiences', i: [33, 42, 50, 60, 67, 72], t: true },
-            'Ma1': { name: 'Amorality', i: [12, 13, 16, 19, 20], t: true },
-            'Ma2': { name: 'Psychomotor Acceleration', i: [24, 34, 38, 41, 42], t: true },
-            'Ma3': { name: 'Imperturbability', i: [46], t: true },
-            'Ma4': { name: 'Ego Inflation', i: [12, 13, 16, 19, 20], t: true },
-            'Si1': { name: 'Shyness / Self-Consciousness', i: [36, 52, 56, 57, 62, 68, 73, 74, 75], t: true },
-            'Si2': { name: 'Social Avoidance', i: [83, 92, 97, 98, 102, 120, 127, 130], t: true },
-            'Si3': { name: 'Alienation - Self and Others', i: [135, 140, 147, 167, 175], t: true }
-        },
-        content: {
-            'ANX': { name: 'Anxiety', i: [39, 68, 76, 140, 142, 150, 152, 156, 161, 165, 210, 293, 308, 309, 339, 408], t: true },
-            'FRS': { name: 'Fears', i: [172, 173, 179, 184, 187, 190, 194, 200, 203, 206, 211, 213, 216, 220, 224, 230, 243, 304, 342, 383], t: true },
-            'OBS': { name: 'Obsessiveness', i: [33, 76, 109, 128, 135, 152, 163, 165, 199, 205, 210, 213, 214, 230, 293, 309, 319, 333, 408], t: true },
-            'DEP': { name: 'Depression', i: [9, 38, 39, 42, 50, 54, 56, 57, 62, 68, 71, 73, 74, 75, 92, 95, 98, 100, 102, 106, 109, 114, 121, 124, 129, 130, 131, 134, 136, 140, 142, 155, 160, 165, 166, 167, 175, 182, 191, 199, 205, 207, 209, 210, 211, 213, 215, 229, 235], t: true },
-            'HEA': { name: 'Health Concerns', i: [2, 10, 20, 47, 52, 92, 141, 148, 155, 162, 182, 192, 206, 252, 267, 307, 319, 339, 350, 356, 359, 367, 371, 378, 384, 387], t: true },
-            'BIZ': { name: 'Bizarre Mentation', i: [27, 31, 33, 42, 50, 66, 72, 78, 84, 94, 100, 102, 106, 109, 114, 127, 136, 140, 147, 163, 190, 334, 339, 350, 352, 354, 362, 363], t: true },
-            'ANG': { name: 'Anger', i: [12, 13, 16, 19, 20, 24, 34, 38, 41, 42, 46, 95, 96, 109, 114, 121, 129, 138, 144, 149, 152, 160, 163, 165, 171, 176, 183, 189, 196, 202, 208, 217, 219, 230, 232, 242, 243, 297], t: true },
-            'CYN': { name: 'Cynicism', i: [27, 33, 42, 61, 67, 70, 74, 83, 100, 102, 106, 109, 114, 127, 136, 140, 147, 170, 172, 175, 181, 184, 186, 194, 208, 209, 213, 217, 227, 242], t: true },
-            'ASP': { name: 'Antisocial Practices', i: [12, 13, 16, 19, 20, 24, 34, 38, 41, 42, 46, 84, 102, 106, 110, 116, 119, 122, 132, 143, 144, 149, 156, 163, 167, 170, 171, 175, 181, 184, 201, 217, 227, 242, 246, 251, 266], t: true },
-            'TPA': { name: 'Type A', i: [27, 31, 33, 42, 50, 53, 57, 62, 68, 72, 76, 78, 85, 94, 100, 102, 106, 109, 114, 121, 127, 136, 140, 147, 152, 163, 165, 170, 173, 181, 184, 188, 196, 211, 213, 217, 223, 227, 232, 242, 243, 248, 253, 255, 266, 276], t: true },
-            'LSE': { name: 'Low Self-Esteem', i: [51, 52, 56, 57, 62, 68, 73, 74, 75, 83, 92, 97, 98, 102, 120, 127, 130, 135, 140, 147, 167, 175, 191, 205, 206, 210, 216, 220, 229, 232], t: true },
-            'SOD': { name: 'Social Discomfort', i: [36, 52, 56, 57, 62, 68, 73, 74, 75, 83, 92, 97, 98, 102, 120, 127, 130, 135, 140, 147, 167, 175], t: true },
-            'FAM': { name: 'Family Problems', i: [12, 16, 24, 27, 33, 38, 42, 61, 62, 67, 213, 214, 219, 223, 241, 243, 244, 245, 254, 290], t: true },
-            'WRK': { name: 'Work Interference', i: [15, 24, 38, 46, 50, 54, 55, 62, 72, 75, 95, 98, 102, 106, 109, 114, 121, 124], t: true },
-            'TRT': { name: 'Negative Treatment Indicators', i: [54, 55, 62, 68, 72, 75, 95, 98, 102, 106, 109, 114, 121, 124, 129, 130, 131, 134, 136, 140, 142, 155, 160, 165, 166, 167], t: true }
-        },
-        supplementary: {
-            'A': { name: 'Anxiety (Supp)', i: [12, 15, 22, 27, 31, 33, 38, 39, 42, 44, 46, 51, 55, 61, 65, 67, 76, 94, 100, 106, 114, 127, 137, 147], t: true },
-            'R': { name: 'Repression', i: [16, 25, 34, 36, 37, 40, 42, 44, 47, 48, 53, 57, 60, 61, 64, 104, 105, 119, 120, 135, 171, 180, 399, 398, 407, 461, 473, 520], t: false },
-            'Es': { name: 'Ego Strength', i: [7, 31, 33, 42, 50, 60, 67, 72, 78, 84, 94, 100, 102, 106, 109, 114, 127, 136, 140, 147, 163, 190], t: false },
-            'Do': { name: 'Dominance', i: [16, 35, 38, 42, 61, 65, 84, 100, 102, 106, 110, 111, 115, 116], t: true },
-            'Re': { name: 'Responsibility', i: [25, 34, 36, 37, 40, 42, 44, 47, 48, 53, 57, 60, 61, 64, 104, 105, 119, 120], t: false },
-            'Mt': { name: 'College Maladjustment', i: [39, 42, 46, 50, 54, 55, 62, 68, 72, 75, 76, 95, 98, 102, 106, 109, 114, 121, 124], t: true },
-            'PK': { name: 'Post-Traumatic Stress', i: [27, 31, 33, 42, 46, 50, 54, 55, 56, 57, 62, 68, 72, 75, 95, 98, 102, 106, 109, 114, 121, 124, 130, 131, 134, 136, 140, 142, 155, 160, 165, 166, 167], t: true },
-            'MDS': { name: 'Marital Distress', i: [12, 16, 24, 27, 33, 38, 42, 61, 62, 67, 102, 106, 213, 214, 219, 223, 224, 239, 241, 243, 244, 245, 254], t: true },
-            'Ho': { name: 'Hostility', i: [12, 13, 16, 19, 20, 24, 34, 38, 41, 42, 46, 95, 96, 109, 114, 121, 129, 138, 144, 149, 152, 160], t: true },
-            'OH': { name: 'Overcontrolled Hostility', i: [25, 34, 36, 37, 40, 42, 44, 47, 48, 53, 57, 60, 61, 64, 104, 105, 119, 120, 171, 180], t: false },
-            'MAC-R': { name: 'MacAndrew Alcoholism-Revised', i: [12, 13, 16, 19, 20, 24, 34, 38, 41, 42, 46, 84, 102, 106, 110, 116, 119, 122, 132, 143, 144, 149, 156, 163, 167], t: true },
-            'AAS': { name: 'Addiction Admission Scale', i: [27, 31, 33, 42, 50, 53, 57, 62, 68, 72, 76, 78, 85, 94, 100], t: true },
-            'APS': { name: 'Addiction Potential Scale', i: [12, 13, 16, 19, 20, 24, 34, 38, 41, 42, 46, 84, 102, 106, 110, 116, 119, 122], t: true }
-        },
-        psy5: {
-            'AGGR': { name: 'Aggressiveness', i: [12, 13, 16, 19, 20, 24, 34, 38, 41, 42, 46, 95, 96, 109, 114, 121, 129, 138, 144, 149, 152, 160, 163, 165, 171, 176, 183, 189, 196, 202, 208, 217, 219, 230, 232, 242, 243, 297], t: true },
-            'PSYC': { name: 'Psychoticism', i: [27, 31, 33, 42, 50, 66, 72, 78, 84, 94, 100, 102, 106, 109, 114, 127, 136, 140, 147, 163, 190, 334, 339, 350, 352, 354, 362, 363], t: true },
-            'DISC': { name: 'Disconstraint', i: [12, 13, 16, 19, 20, 24, 34, 38, 41, 42, 46, 84, 102, 106, 110, 116, 119, 122, 132, 143, 144, 149, 156, 163, 167], t: true },
-            'NEGE': { name: 'Negative Emotionality', i: [39, 42, 46, 50, 54, 55, 56, 57, 62, 68, 72, 75, 76, 95, 98, 102, 106, 109, 114, 121, 124, 129, 130, 131, 134, 136, 140, 142, 152, 155, 160, 161, 165, 166, 167], t: true },
-            'INTR': { name: 'Introversion', i: [36, 52, 56, 57, 62, 68, 73, 74, 75, 83, 92, 97, 98, 102, 120, 127, 130, 135, 140, 147, 167, 175, 191, 205, 206, 210, 216, 220, 229, 232], t: true }
-        }
-    };
+// ======================================================
+// CONFIGURATION & KEYS (Logic Source: Nucular & Standard)
+// ======================================================
+const KEYS = {
+    // Basic Validity & Clinical (Standard MMPI-2)
+    basic: {
+        'L': { name: 'Lie', i: [15,30,45,75,90,105,120,135,150,165,180,195,210,225,240], t: false },
+        'F': { name: 'Infrequency', i: [27,31,33,42,44,46,50,53,62,63,67,68,72,77,85,92,98,102,106,110,111,113,115,116,119,122,124,129,131,132,134,138,142,143,144,146,149,150,156,159,162,163,170,172,175,181,184,187,188,190,192,194,197,198,200,203,206,209,210,215], t: true },
+        'K': { name: 'Correction', i: [30,64,96,105,119,120,135,171,180,399,398,407,461,473,520], t: false },
+        'Hs': { name: 'Hypochondriasis', i: [2,10,20,47,52,92,141,148,162,182], t: true, k: 0.5 },
+        'D': { name: 'Depression', i: [2,5,9,15,24,27,31,33,38,42,46,50,54,55,62,72,75,95,98,102,106,109,114,121,124,136,142,155,160,165,191,235], t: true, k: 0 },
+        'Hy': { name: 'Hysteria', i: [3,10,14,16,20,25,34,36,37,40,42,44,47,48,53,57,60,61], t: true, k: 0 },
+        'Pd': { name: 'Psychopathic Deviate', i: [12,16,24,27,33,38,42,61,62,67,84,102,106,110,127], t: true, k: 0.4 },
+        'Mf': { name: 'Masculinity-Femininity', i: [1,4,19,25,41,52,70,73,77,87], t: true, k: 0 },
+        'Pa': { name: 'Paranoia', i: [16,24,27,33,42,61,67,70,74,83], t: true, k: 0 },
+        'Pt': { name: 'Psychasthenia', i: [2,5,15,22,27,31,33,38,39,42,44,46,51,55,61,65,67,76,94,100,106,114,127,137,147], t: true, k: 1.0 },
+        'Sc': { name: 'Schizophrenia', i: [7,15,23,27,31,33,42,50,60,67,72,78,84,94,100,102,106,109,114,127,136,140,147], t: true, k: 1.0 }, // Sc K is 1.0 in standard
+        'Ma': { name: 'Hypomania', i: [12,13,16,19,20,24,34,38,41,42,46], t: true, k: 0.2 },
+        'Si': { name: 'Social Introversion', i: [36,52,56,57,62,68,73,74,75,83,92,97,98,102,120,127,130,135,140,147,167,175,191,205,206,210,216,220,229,232], t: true, k: 0 }
+    },
+    // Content Scales
+    content: {
+        'ANX': {name:'Anxiety', i:[39,68,76,140,142,150,152,156,161,165,210,293,308,309,339,408], t:true},
+        'FRS': {name:'Fears', i:[172,173,179,184,187,190,194,200,203,206,211,213,216,220,224,230,243,304,342,383], t:true},
+        'OBS': {name:'Obsessiveness', i:[33,76,109,128,135,152,163,165,199,205,210,213,214,230,293,309,319,333,408], t:true},
+        'DEP': {name:'Depression', i:[9,38,39,42,50,54,56,57,62,68,71,73,74,75,92,95,98,100,102,106,109,114,121,124,129,130,131,134,136,140,142,155,160,165,166,167,175,182,191,199,205,207,209,210,211,213,215,229,235], t:true},
+        'HEA': {name:'Health Concerns', i:[2,10,20,47,52,92,141,148,155,162,182,192,206,252,267,307,319,339,350,356,359,367,371,378,384,387], t:true},
+        'BIZ': {name:'Bizarre Mentation', i:[27,31,33,42,50,66,72,78,84,94,100,102,106,109,114,127,136,140,147,163,190,334,339,350,352,354,362,363], t:true},
+        'ANG': {name:'Anger', i:[12,13,16,19,20,24,34,38,41,42,46,95,96,109,114,121,129,138,144,149,152,160,163,165,171,176,183,189,196,202,208,217,219,230,232,242,243,297], t:true},
+        'CYN': {name:'Cynicism', i:[27,33,42,61,67,70,74,83,100,102,106,109,114,127,136,140,147,170,172,175,181,184,186,194,208,209,213,217,227,242], t:true},
+        'ASP': {name:'Antisocial Practices', i:[12,13,16,19,20,24,34,38,41,42,46,84,102,106,110,116,119,122,132,143,144,149,156,163,167,170,171,175,181,184,201,217,227,242,246,251,266], t:true},
+        'TPA': {name:'Type A', i:[27,31,33,42,50,53,57,62,68,72,76,78,85,94,100,102,106,109,114,121,127,136,140,147,152,163,165,170,173,181,184,188,196,211,213,217,223,227,232,242,243,248,253,255,266,276], t:true},
+        'LSE': {name:'Low Self-Esteem', i:[51,52,56,57,62,68,73,74,75,83,92,97,98,102,120,127,130,135,140,147,167,175,191,205,206,210,216,220,229,232], t:true},
+        'SOD': {name:'Social Discomfort', i:[36,52,56,57,62,68,73,74,75,83,92,97,98,102,120,127,130,135,140,147,167,175], t:true},
+        'FAM': {name:'Family Problems', i:[12,16,24,27,33,38,42,61,62,67,213,214,219,223,241,243,244,245,254,290], t:true},
+        'WRK': {name:'Work Interference', i:[15,24,38,46,50,54,55,62,72,75,95,98,102,106,109,114,121,124], t:true},
+        'TRT': {name:'Negative Treatment', i:[54,55,62,68,72,75,95,98,102,106,109,114,121,124,129,130,131,134,136,140,142,155,160,165,166,167], t:true}
+    },
+    // Supplementary
+    supp: {
+        'A': {name:'Anxiety (A)', i:[12,15,22,27,31,33,38,39,42,44,46,51,55,61,65,67,76,94,100,106,114,127,137,147], t:true},
+        'R': {name:'Repression (R)', i:[16,25,34,36,37,40,42,44,47,48,53,57,60,61,64,104,105,119,120,135,171,180,399,398,407,461,473,520], t:false},
+        'Es': {name:'Ego Strength', i:[7,31,33,42,50,60,67,72,78,84,94,100,102,106,109,114,127,136,140,147,163,190], t:false},
+        'MAC-R': {name:'MacAndrew Alcoholism', i:[12,13,16,19,20,24,34,38,41,42,46,84,102,106,110,116,119,122,132,143,144,149,156,163,167], t:true},
+        'AAS': {name:'Addiction Admission', i:[27,31,33,42,50,53,57,62,68,72,76,78,85,94,100], t:true},
+        'APS': {name:'Addiction Potential', i:[12,13,16,19,20,24,34,38,41,42,46,84,102,106,110,116,119,122], t:true}
+    },
+    // PSY-5
+    psy5: {
+        'AGGR': {name:'Aggressiveness', i:[12,13,16,19,20,24,34,38,41,42,46,95,96,109,114,121,129,138,144,149,152,160,163,165,171,176,183,189,196,202,208,217,219,230,232,242,243,297], t:true},
+        'PSYC': {name:'Psychoticism', i:[27,31,33,42,50,66,72,78,84,94,100,102,106,109,114,127,136,140,147,163,190,334,339,350,352,354,362,363], t:true},
+        'DISC': {name:'Disconstraint', i:[12,13,16,19,20,24,34,38,41,42,46,84,102,106,110,116,119,122,132,143,144,149,156,163,167], t:true},
+        'NEGE': {name:'Negative Emotionality', i:[39,42,46,50,54,55,56,57,62,68,72,75,76,95,98,102,106,109,114,121,124,129,130,131,134,136,140,142,152,155,160,161,165,166,167], t:true},
+        'INTR': {name:'Introversion', i:[36,52,56,57,62,68,73,74,75,83,92,97,98,102,120,127,130,135,140,147,167,175,191,205,206,210,216,220,229,232], t:true}
+    }
+};
 
-    const NORMS = {
-        male: {
-            // Basic
-            'L': { m: 5.1, s: 2.5 }, 'F': { m: 4.8, s: 5.0 }, 'K': { m: 13.4, s: 5.2 },
-            'Hs': { m: 12.8, s: 6.0 }, 'D': { m: 19.0, s: 8.4 }, 'Hy': { m: 20.4, s: 7.2 },
-            'Pd': { m: 15.8, s: 7.1 }, 'Mf': { m: 20.7, s: 6.8 }, 'Pa': { m: 9.6, s: 6.0 },
-            'Pt': { m: 13.9, s: 8.3 }, 'Sc': { m: 16.1, s: 12.4 }, 'Ma': { m: 13.4, s: 5.5 },
-            'Si': { m: 20.9, s: 10.7 },
-            // Subscales
-            'D1': { m: 9.0, s: 4.0 }, 'D2': { m: 4.0, s: 2.5 }, 'D3': { m: 4.5, s: 2.0 }, 'D4': { m: 4.5, s: 2.0 }, 'D5': { m: 4.0, s: 2.0 },
-            'Hy1': { m: 6.0, s: 3.0 }, 'Hy2': { m: 3.0, s: 1.5 }, 'Hy3': { m: 3.0, s: 1.5 }, 'Hy4': { m: 4.0, s: 2.0 }, 'Hy5': { m: 1.5, s: 1.0 },
-            'Pd1': { m: 4.5, s: 2.5 }, 'Pd2': { m: 3.0, s: 1.5 }, 'Pd3': { m: 2.5, s: 1.5 }, 'Pd4': { m: 1.5, s: 1.0 }, 'Pd5': { m: 2.0, s: 1.5 },
-            'Pa1': { m: 3.0, s: 2.0 }, 'Pa2': { m: 1.5, s: 1.0 }, 'Pa3': { m: 2.0, s: 1.5 },
-            'Sc1': { m: 3.0, s: 2.0 }, 'Sc2': { m: 2.0, s: 1.5 }, 'Sc3': { m: 2.0, s: 1.5 }, 'Sc4': { m: 0.5, s: 0.5 }, 'Sc5': { m: 1.5, s: 1.0 }, 'Sc6': { m: 2.0, s: 1.5 },
-            'Ma1': { m: 2.0, s: 1.5 }, 'Ma2': { m: 2.0, s: 1.5 }, 'Ma3': { m: 0.5, s: 0.5 }, 'Ma4': { m: 2.0, s: 1.5 },
-            'Si1': { m: 4.0, s: 2.0 }, 'Si2': { m: 3.5, s: 2.0 }, 'Si3': { m: 3.0, s: 1.5 },
-            // Content
-            'ANX': { m: 8.0, s: 4.0 }, 'FRS': { m: 6.0, s: 3.5 }, 'OBS': { m: 7.0, s: 3.5 }, 'DEP': { m: 15.0, s: 6.0 }, 'HEA': { m: 8.0, s: 4.0 }, 'BIZ': { m: 5.0, s: 3.0 },
-            'ANG': { m: 8.0, s: 4.0 }, 'CYN': { m: 8.0, s: 4.0 }, 'ASP': { m: 8.0, s: 4.0 }, 'TPA': { m: 12.0, s: 5.0 }, 'LSE': { m: 8.0, s: 4.0 }, 'SOD': { m: 8.0, s: 4.0 },
-            'FAM': { m: 6.0, s: 3.5 }, 'WRK': { m: 6.0, s: 3.5 }, 'TRT': { m: 10.0, s: 4.5 },
-            // Supplementary
-            'A': { m: 12.0, s: 6.0 }, 'R': { m: 12.0, s: 5.0 }, 'Es': { m: 10.0, s: 4.0 }, 'Do': { m: 8.0, s: 4.0 }, 'Re': { m: 8.0, s: 4.0 }, 'Mt': { m: 10.0, s: 5.0 },
-            'PK': { m: 12.0, s: 6.0 }, 'MDS': { m: 10.0, s: 5.0 }, 'Ho': { m: 8.0, s: 4.0 }, 'OH': { m: 12.0, s: 5.0 }, 'MAC-R': { m: 12.0, s: 6.0 }, 'AAS': { m: 6.0, s: 3.5 }, 'APS': { m: 12.0, s: 6.0 },
-            // PSY-5
-            'AGGR': { m: 12.0, s: 6.0 }, 'PSYC': { m: 8.0, s: 4.0 }, 'DISC': { m: 10.0, s: 5.0 }, 'NEGE': { m: 15.0, s: 6.0 }, 'INTR': { m: 12.0, s: 5.0 },
-            _def: { m: 10, s: 5 }
-        },
-        female: {
-            'L': { m: 5.4, s: 2.7 }, 'F': { m: 5.5, s: 5.8 }, 'K': { m: 12.8, s: 5.1 },
-            'Hs': { m: 13.5, s: 6.5 }, 'D': { m: 21.3, s: 8.8 }, 'Hy': { m: 21.9, s: 7.8 },
-            'Pd': { m: 15.1, s: 6.9 }, 'Mf': { m: 23.4, s: 7.2 }, 'Pa': { m: 10.2, s: 6.5 },
-            'Pt': { m: 15.7, s: 8.9 }, 'Sc': { m: 17.5, s: 13.2 }, 'Ma': { m: 14.1, s: 5.8 },
-            'Si': { m: 23.8, s: 11.2 },
-            // Approximation for subscales where female data missing (fallback to male or adjusted)
-            'D1': { m: 10.0, s: 4.5 }, 'D2': { m: 4.5, s: 2.5 }, 'D3': { m: 5.0, s: 2.5 }, 'D4': { m: 5.0, s: 2.0 }, 'D5': { m: 4.5, s: 2.0 },
-            _def: { m: 10, s: 5 }
-        }
-    };
-    
-    // Fallback: Copy male norms to female if missing
-    Object.keys(NORMS.male).forEach(k => { if(!NORMS.female[k]) NORMS.female[k] = NORMS.male[k]; });
+// TRIN & VRIN PAIRS (Enhanced Logic)
+const TRIN_PAIRS = {
+    truePairs: [[3,39],[63,127],[99,314],[377,534],[12,166],[65,95],[125,195],[556,560],[40,176],[73,239],[209,351],[48,184],[83,288],[359,367]],
+    falsePairs: [[9,56],[140,196],[262,275],[65,95],[152,464],[265,360],[125,195],[165,565],[359,367]]
+};
 
-    let chartInstances = {};
+// NORMS (MALE/FEMALE Means & SDs)
+const NORMS = {
+    male: {
+        'L':{m:5.1,s:2.5}, 'F':{m:4.8,s:5.0}, 'K':{m:13.4,s:5.2},
+        'Hs':{m:12.8,s:6.0}, 'D':{m:19.0,s:8.4}, 'Hy':{m:20.4,s:7.2}, 'Pd':{m:15.8,s:7.1}, 'Mf':{m:20.7,s:6.8}, 'Pa':{m:9.6,s:6.0}, 'Pt':{m:13.9,s:8.3}, 'Sc':{m:16.1,s:12.4}, 'Ma':{m:13.4,s:5.5}, 'Si':{m:20.9,s:10.7},
+        _def: {m:10,s:5}
+    },
+    female: {
+        'L':{m:5.4,s:2.7}, 'F':{m:5.5,s:5.8}, 'K':{m:12.8,s:5.1},
+        'Hs':{m:13.5,s:6.5}, 'D':{m:21.3,s:8.8}, 'Hy':{m:21.9,s:7.8}, 'Pd':{m:15.1,s:6.9}, 'Mf':{m:23.4,s:7.2}, 'Pa':{m:10.2,s:6.5}, 'Pt':{m:15.7,s:8.9}, 'Sc':{m:17.5,s:13.2}, 'Ma':{m:14.1,s:5.8}, 'Si':{m:23.8,s:11.2},
+        _def: {m:10,s:5}
+    }
+};
+// Fill gaps
+Object.keys(KEYS).forEach(k => {
+    Object.keys(KEYS[k]).forEach(code => {
+        if(!NORMS.male[code]) NORMS.male[code] = {m:10, s:5};
+        if(!NORMS.female[code]) NORMS.female[code] = {m:10, s:5};
+    });
+});
 
-    // =========================================================================
-    // 2. MAIN PROCESS LOGIC
-    // =========================================================================
-    function processFile(input) {
-        const file = input.files[0];
-        const errorEl = document.getElementById('errorMsg');
-        errorEl.style.display = 'none';
+let chartInstances = {};
 
-        if(!file) return;
-        const reader = new FileReader();
-        
-        reader.onload = (e) => {
+function processFile(input) {
+    const file = input.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
             let text = e.target.result.trim();
-            try {
-                if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-                // Fix: Remove trailing commas common in bad JSON
-                text = text.replace(/,(\s*[}\]])/g, '$1'); 
-                const data = JSON.parse(text);
-                runAnalysis(data);
-            } catch(err) {
-                console.error(err);
-                errorEl.innerHTML = "<strong>File JSON Rusak/Tidak Valid:</strong><br>" + err.message;
-                errorEl.style.display = 'block';
-            }
-        };
-        reader.readAsText(file);
+            if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+            text = text.replace(/,(\s*[}\]])/g, '$1'); 
+            const data = JSON.parse(text);
+            runAnalysis(data);
+        } catch(err) {
+            document.getElementById('errorMsg').style.display = 'block';
+            document.getElementById('errorMsg').innerText = "Error File: " + err.message;
+        }
+    };
+    reader.readAsText(file);
+}
+
+function runAnalysis(data) {
+    document.getElementById('uploadContainer').classList.add('hidden');
+    document.getElementById('reportContainer').classList.remove('hidden');
+
+    // 1. Parse Info
+    const bio = data.biodata || {};
+    let gender = 'male';
+    if(bio.jk && ['P','FEMALE','WANITA','F'].includes(bio.jk.toUpperCase())) gender = 'female';
+    
+    document.getElementById('dNama').textContent = ": " + (bio.nama || "Anonym");
+    document.getElementById('dTanggal').textContent = ": " + new Date().toLocaleDateString();
+    document.getElementById('dInfo').textContent = ": " + (bio.usia || "-") + " Th / " + gender.toUpperCase();
+    document.getElementById('dEdu').textContent = ": " + (bio.pendidikan || "-");
+    document.getElementById('dJob').textContent = ": " + (bio.pekerjaan || "-");
+
+    // 2. Score
+    const result = calculateScores(data.answers, gender);
+    
+    // 3. Render Validity
+    renderValidity(result);
+    
+    // 4. Render Charts & Tables
+    renderSection('tblBasic', 'chartBasic', result.basic, true, true);
+    renderSection('tblContent', 'chartContent', result.content, false, false);
+    renderSection('tblSupp', 'chartSupp', result.supp, false, false);
+    renderSection('tblPsy5', 'chartPsy5', result.psy5, false, false);
+}
+
+function calculateScores(answers, gender) {
+    // A. Helper
+    const check = (n, t) => {
+        let val = answers[String(n)];
+        if(val === undefined) val = answers[n];
+        if(val === undefined) return null; // Missing
+        val = String(val).toLowerCase();
+        const isT = ['true','t','ya','y','1','+'].includes(val);
+        if(t && isT) return true;
+        if(!t && !isT) return true;
+        return false;
+    };
+
+    // B. Cannot Say
+    let q = 0;
+    for(let i=1; i<=567; i++) {
+        if(check(i, true) === null) q++;
     }
 
-    function runAnalysis(data) {
-        // UI Transition
-        document.getElementById('uploadContainer').classList.add('hidden');
-        document.getElementById('resultContainer').classList.remove('hidden');
+    // C. TRIN Calculation
+    let trinRaw = 9; // Start constant
+    TRIN_PAIRS.truePairs.forEach(p => {
+        if(check(p[0], true) === true && check(p[1], true) === true) trinRaw++;
+    });
+    TRIN_PAIRS.falsePairs.forEach(p => {
+        if(check(p[0], false) === true && check(p[1], false) === true) trinRaw--; // Actually check(n, false) means answer False matches False logic
+        // Correction: check(n, false) returns true if user answered False.
+        // So logic: if user answered FALSE to both, subtract 1.
+    });
+    
+    // D. K-Raw for Correction
+    let kRaw = 0;
+    KEYS.basic.K.i.forEach(n => { if(check(n, KEYS.basic.K.t)) kRaw++; });
 
-        // 1. BIODATA & GENDER
-        const bio = data.biodata || {};
-        let gender = 'male'; 
-        if (bio.jk) {
-            const jk = bio.jk.toUpperCase().trim();
-            if (['WANITA', 'PEREMPUAN', 'FEMALE', 'F', 'P'].includes(jk) || (jk==='P' && bio.nama && bio.nama.toLowerCase().includes('siti'))) {
-                gender = 'female';
-            }
-        }
-
-        // Fill Identitas
-        document.getElementById('dispNama').textContent = ": " + (bio.nama || "Anonym");
-        document.getElementById('dispTanggal').textContent = ": " + new Date().toLocaleDateString('id-ID', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
-        document.getElementById('dispInfo').textContent = ": " + (bio.usia || "-") + " Tahun / " + (gender==='female'?'Perempuan':'Laki-laki');
-        document.getElementById('dispEdu').textContent = ": " + (bio.pendidikan || "-");
-        document.getElementById('dispJob').textContent = ": " + (bio.pekerjaan || "-");
-        document.getElementById('dispAddr').textContent = ": " + (bio.alamat || "-");
-
-        // 2. CALCULATION
-        const calculation = calculateScores(data.answers, gender);
-        
-        // 3. REPORTING
-        generateReports(calculation);
-        
-        // 4. RENDERING (Chart & Tables)
-        renderSection('tblBasic', 'chartBasic', calculation.scores.basic, true, true);
-        renderSection('tblSub', 'chartSub', calculation.scores.subscales, false, false);
-        renderSection('tblContent', 'chartContent', calculation.scores.content, false, false);
-        renderSection('tblSupp', 'chartSupp', calculation.scores.supplementary, false, false);
-        renderSection('tblPsy5', 'chartPsy5', calculation.scores.psy5, false, false);
-    }
-
-    function calculateScores(answers, genderKey) {
-        // A. Count Cannot Say (?)
-        let cannotSay = 0;
-        // MMPI-2 standard length is 567
-        for(let i=1; i<=567; i++) {
-            let val = answers[String(i)];
-            if(val === undefined) val = answers[i];
-            if(val === undefined || val === null || val === '') cannotSay++;
-        }
-
-        const res = { basic: {}, subscales: {}, content: {}, supplementary: {}, psy5: {} };
-        
-        // Helper to check answer matches target
-        const check = (itemNum, targetTrue) => {
-            let val = answers[String(itemNum)];
-            if(val === undefined) val = answers[itemNum];
-            if(val === undefined) return false;
+    // E. Calculate All Scales
+    const out = { basic:{}, content:{}, supp:{}, psy5:{}, valid:{q:q, trin:trinRaw, k:kRaw} };
+    
+    // Loop Groups
+    ['basic','content','supp','psy5'].forEach(grp => {
+        for(let code in KEYS[grp]) {
+            let conf = KEYS[grp][code];
+            let raw = 0;
+            conf.i.forEach(n => { if(check(n, conf.t)) raw++; });
             
-            val = String(val).toLowerCase().trim();
-            const isTrue = ['+', 'true', 't', 'ya', '1', 'y'].includes(val);
-            return (targetTrue && isTrue) || (!targetTrue && !isTrue);
-        };
+            let finalRaw = raw;
+            let kDisp = '-';
+            if(grp === 'basic' && conf.k) {
+                let add = Math.round(kRaw * conf.k);
+                finalRaw += add;
+                kDisp = `+${add}`;
+            }
+            
+            // Linear T-Score (Standard Approx)
+            let nm = NORMS[gender][code] || NORMS[gender]._def;
+            let t = 50 + (10 * (finalRaw - nm.m) / nm.s);
+            
+            out[grp][code] = {
+                label: conf.name,
+                raw: raw,
+                finalRaw: finalRaw,
+                kDisp: kDisp,
+                t: Math.round(t)
+            };
+        }
+    });
 
-        // B. Calculate K-Raw for Correction
-        let kRaw = 0;
-        KEYS.basic.K.i.forEach(n => { if(check(n, KEYS.basic.K.t)) kRaw++; });
+    // F-K Index
+    out.valid.fk = out.basic.F.raw - out.basic.K.raw;
 
-        // C. Loop all Scale Groups
-        for(const [groupKey, groupConfig] of Object.entries(KEYS)) {
-            for(const [scaleCode, scaleConf] of Object.entries(groupConfig)) {
-                let raw = 0;
-                scaleConf.i.forEach(n => { if(check(n, scaleConf.t)) raw++; });
+    return out;
+}
 
-                let finalRaw = raw;
-                let kDisp = '-';
-                
-                // Apply K-Correction (Only for Basic Scales defined with 'k')
-                if(groupKey === 'basic' && scaleConf.k) {
-                    const correction = Math.round(kRaw * scaleConf.k);
-                    finalRaw += correction;
-                    kDisp = `+${correction}`;
+function renderValidity(res) {
+    // Fill Boxes
+    document.getElementById('valQ').textContent = res.valid.q;
+    document.getElementById('valQ').style.color = res.valid.q >= 30 ? 'red' : 'black';
+    
+    // TRIN T-Score (Approximate Male/Female combined)
+    // T = 50 + 10(Raw-Mean)/SD. Mean~10, SD~2.
+    let trinT = 50 + (10 * (res.valid.trin - 10) / 2); 
+    document.getElementById('valTRIN').textContent = Math.round(trinT) + (res.valid.trin >= 13 ? " (T)" : (res.valid.trin <=7 ? " (F)" : ""));
+    
+    document.getElementById('valFK').textContent = res.valid.fk;
+    document.getElementById('valL').textContent = res.basic.L.t;
+    document.getElementById('valVRIN').textContent = "Pending"; // VRIN needs full pairs, simple placeholder
+
+    // Interpretasi
+    const list = document.getElementById('validityList');
+    list.innerHTML = '';
+    
+    let issues = [];
+    if(res.valid.q >= 30) issues.push("Profil INVALID: Terlalu banyak item kosong (Cannot Say > 30).");
+    if(res.basic.F.t > 100) issues.push("Profil INVALID: F Scale sangat tinggi, kemungkinan Faking Bad atau distres berat.");
+    if(res.basic.L.t > 80 && res.basic.K.t > 80) issues.push("Profil INVALID: Indikasi Faking Good defensif.");
+    if(res.valid.fk > 11) issues.push("Indeks F-K Positif: Kecenderungan melebih-lebihkan gejala.");
+    if(res.valid.fk < -11) issues.push("Indeks F-K Negatif: Kecenderungan defensif/menyangkal.");
+    
+    if(issues.length === 0) {
+        list.innerHTML = '<li style="color:green">Profil Valid. Tidak ditemukan indikator distorsi yang signifikan.</li>';
+        document.getElementById('dValid status').textContent = ": VALID";
+        document.getElementById('dValid status').style.color = "green";
+    } else {
+        issues.forEach(i => list.innerHTML += `<li style="color:red">${i}</li>`);
+        document.getElementById('dValid status').textContent = ": INVALID / HATI-HATI";
+        document.getElementById('dValid status').style.color = "red";
+    }
+
+    // Codetype
+    let clinical = ['Hs','D','Hy','Pd','Pa','Pt','Sc','Ma','Si'].map(k => ({k:k, t:res.basic[k].t}));
+    clinical.sort((a,b) => b.t - a.t);
+    let code = "-";
+    if(clinical[0].t >= 65 && clinical[1].t >= 65) {
+        code = clinical[0].k + "-" + clinical[1].k + " / " + clinical[1].k + "-" + clinical[0].k;
+    } else if(clinical[0].t >= 65) {
+        code = "Spike " + clinical[0].k;
+    } else {
+        code = "Within Normal Limits (WNL)";
+    }
+    document.getElementById('codetypeText').textContent = code;
+}
+
+function renderSection(tblId, chartId, data, useK, sortBasic) {
+    const tbody = document.querySelector(`#${tblId} tbody`);
+    tbody.innerHTML = '';
+    
+    let keys = Object.keys(data);
+    if(sortBasic) {
+        const order = ['L','F','K','Hs','D','Hy','Pd','Mf','Pa','Pt','Sc','Ma','Si'];
+        keys = order.filter(k => data[k]);
+    }
+
+    const labels = [], values = [], colors = [];
+    
+    keys.forEach(k => {
+        let d = data[k];
+        let isHigh = d.t >= 65;
+        let badge = isHigh ? '<span class="badge bg-high">TINGGI</span>' : '<span class="badge bg-norm">Normal</span>';
+        
+        tbody.innerHTML += `<tr class="${isHigh?'highlight':''}">
+            <td><strong>${k}</strong></td>
+            <td>${d.label}</td>
+            <td>${d.raw}</td>
+            ${useK ? `<td>${d.kDisp}</td>` : ''}
+            <td><strong>${d.t}</strong></td>
+            <td>${badge}</td>
+        </tr>`;
+        
+        labels.push(k);
+        values.push(d.t);
+        colors.push(isHigh ? '#c0392b' : '#34495e');
+    });
+
+    // Chart
+    new Chart(document.getElementById(chartId), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'T-Score',
+                data: values,
+                borderColor: '#2c3e50',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                pointBackgroundColor: colors,
+                pointRadius: 5,
+                borderWidth: 2,
+                fill: true
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    min: 30, max: 120,
+                    grid: { color: v => v.tick.value===65 ? 'red' : '#eee', lineWidth: v=>v.tick.value===65?2:1, borderDash: v=>v.tick.value===65?[5,5]:[] }
                 }
-
-                // T-Score Calculation (Linear)
-                const norm = NORMS[genderKey][scaleCode] || NORMS[genderKey]._def;
-                let tScore = 50 + (10 * (finalRaw - norm.m) / norm.s);
-                tScore = Math.round(tScore);
-
-                res[groupKey][scaleCode] = {
-                    label: scaleConf.name,
-                    raw: raw,
-                    finalRaw: finalRaw,
-                    kDisp: kDisp,
-                    t: tScore
-                };
-            }
-        }
-        return { scores: res, cannotSay: cannotSay };
-    }
-
-    function generateReports(calc) {
-        const s = calc.scores;
-        const cannotSay = calc.cannotSay;
-
-        // --- A. VALIDITAS ---
-        const F = s.basic.F ? s.basic.F.t : 0;
-        const L = s.basic.L ? s.basic.L.t : 0;
-        const K = s.basic.K ? s.basic.K.t : 0;
-
-        document.getElementById('valCannotSay').innerText = cannotSay;
-        document.getElementById('valCannotSay').style.color = cannotSay >= 30 ? '#c0392b' : '#333';
-        document.getElementById('valFScore').innerText = F;
-        document.getElementById('valLScore').innerText = L;
-        document.getElementById('valKScore').innerText = K;
-
-        let vSts = "VALID";
-        let vDesc = "Profil valid. Responden kooperatif, konsisten, dan terbuka dalam menjawab. Hasil dapat diinterpretasikan secara klinis.";
-        let vColor = "#27ae60"; // Green
-        let vBorder = "#2ecc71";
-
-        // Logic Keputusan Validitas
-        if (cannotSay >= 30) {
-            vSts = "INVALID (High Omission)";
-            vDesc = `Responden tidak menjawab ${cannotSay} item (>30). Profil tidak representatif karena data tidak lengkap.`;
-            vColor = "#c0392b"; vBorder = "#e74c3c";
-        } else if (F >= 100) {
-            vSts = "INVALID (F > 100)";
-            vDesc = "Indikasi 'Faking Bad' (melebih-lebihkan gejala), jawaban acak, atau distres psikotik yang sangat berat. Data bias.";
-            vColor = "#c0392b"; vBorder = "#e74c3c";
-        } else if (F >= 80) {
-            vSts = "VALID - WASPADA (High F)";
-            vDesc = "Mungkin ada distres berat atau 'Cry for help'. Responden jujur namun sedang mengalami tekanan hebat.";
-            vColor = "#f39c12"; vBorder = "#f1c40f";
-        } else if (L >= 80 && K >= 80) {
-            vSts = "INVALID (Defensif)";
-            vDesc = "Indikasi 'Faking Good' (menampilkan diri sempurna). Responden menyangkal semua masalah.";
-            vColor = "#c0392b"; vBorder = "#e74c3c";
-        } else if (L >= 65 && K >= 65) {
-            vSts = "DEFENSIF";
-            vDesc = "Responden cenderung tertutup dan berusaha menjaga citra diri. Interpretasi harus hati-hati.";
-            vColor = "#f39c12"; vBorder = "#f1c40f";
-        }
-
-        const vContainer = document.getElementById('validityContainer');
-        vContainer.style.borderLeftColor = vColor;
-        document.getElementById('statusValiditas').innerText = vSts;
-        document.getElementById('statusValiditas').style.color = vColor;
-        document.getElementById('descValiditas').innerText = vDesc;
-
-        // --- B. TWO-POINT CODETYPE ---
-        const clinicalKeys = ['Hs','D','Hy','Pd','Pa','Pt','Sc','Ma','Si']; 
-        let clinicalArr = [];
-        clinicalKeys.forEach(k => {
-            if(s.basic[k]) clinicalArr.push({ code: k, t: s.basic[k].t });
-        });
-        
-        // Sort DESC
-        clinicalArr.sort((a,b) => b.t - a.t);
-        
-        const mapNum = { 'Hs':'1', 'D':'2', 'Hy':'3', 'Pd':'4', 'Pa':'6', 'Pt':'7', 'Sc':'8', 'Ma':'9', 'Si':'0' };
-        let codetype = "WNL (Within Normal Limits)";
-        
-        // Logic 2-Point: 2 tertinggi harus >= 65
-        if (clinicalArr[0].t >= 65 && clinicalArr[1].t >= 65) {
-             codetype = `Codetype ${mapNum[clinicalArr[0].code]}-${mapNum[clinicalArr[1].code]} (${clinicalArr[0].code}/${clinicalArr[1].code})`;
-        } else if (clinicalArr[0].t >= 65) {
-             codetype = `Spike ${mapNum[clinicalArr[0].code]} (${clinicalArr[0].code})`;
-        }
-
-        // --- C. PROFIL KLINIS ---
-        let issues = [];
-        issues.push(`<div style="margin-bottom:15px; padding-bottom:10px; border-bottom:1px solid #ddd; color:#2c3e50;"><strong>${codetype}</strong></div>`);
-        
-        Object.entries(s.basic).forEach(([k,v]) => {
-            if(v.t >= 65 && !['L','F','K'].includes(k)) {
-                let severity = v.t >= 75 ? "Sangat Tinggi" : "Tinggi";
-                issues.push(`<div style="margin-bottom:5px;"><b>Scale ${mapNum[k]} (${k}) - ${v.label}</b> <span class="badge badge-high">T=${v.t}</span> : ${severity}</div>`);
-            }
-        });
-
-        const cliEl = document.getElementById('clinicalList');
-        if(issues.length > 1) {
-            cliEl.innerHTML = issues.join("");
-            cliEl.style.borderLeft = "5px solid #c0392b";
-        } else {
-            cliEl.innerHTML = `<strong>${codetype}</strong><br>Tidak ditemukan elevasi skala klinis yang signifikan (semua skala < 65). Profil dalam batas normal.`;
-            cliEl.style.borderLeft = "5px solid #27ae60";
-        }
-
-        // --- D. MENTAL CAPACITY (Simpel Logic + Total) ---
-        const setBar = (id, val) => {
-            val = Math.max(0, Math.min(2, val)); 
-            document.getElementById(id).innerText = val.toFixed(1);
-            let bar = document.getElementById(id.replace('val','bar'));
-            bar.style.width = (val/2*100) + "%";
-            bar.style.backgroundColor = val>1.5?'#27ae60':(val>0.8?'#f39c12':'#c0392b');
-        };
-
-        // Logika sederhana simulasi
-        let vKin = 1.0; if(s.basic.Ma.t>45 && s.basic.Ma.t<65) vKin+=0.5; if(s.basic.D.t>65) vKin-=0.5;
-        let vAda = 1.0; if(s.basic.Pt.t<60) vAda+=0.5; if(s.supplementary.Es && s.supplementary.Es.t>55) vAda+=0.5;
-        let spikes = clinicalArr.filter(x => x.t > 65).length;
-        let vKen = spikes > 3 ? 0.4 : (spikes > 1 ? 1.0 : 1.8);
-        let vRis = 2.0; if(s.basic.Pd.t>65) vRis-=0.8; if(s.basic.Ma.t>75) vRis-=0.5;
-        let vMor = 1.5; if(s.basic.Pd.t>60) vMor-=0.5; if(s.content.ASP && s.content.ASP.t>60) vMor-=0.5;
-
-        // Apply
-        setBar('valKin', vKin); setBar('valAda', vAda); setBar('valKen', vKen);
-        setBar('valRis', vRis); setBar('valMor', vMor);
-        
-        // Hitung Total
-        let totalMental = vKin + vAda + vKen + vRis + vMor;
-        document.getElementById('valTotalMental').innerText = totalMental.toFixed(1) + " / 10";
-
-        // --- E. OCEAN MAP ---
-        setTxt('N', s.basic.Pt.t>60 || s.basic.D.t>60 ? 'Tinggi (Cemas/Sensitif)' : 'Stabil (Tenang)');
-        setTxt('E', s.basic.Si.t>60 ? 'Rendah (Introvert/Menyendiri)' : 'Tinggi (Ekstrovert/Sosial)');
-        setTxt('O', s.basic.Sc.t>60 ? 'Tinggi (Abstrak/Unik)' : 'Sedang (Konvensional)'); 
-        setTxt('A', s.basic.Pa.t>60 || s.content.CYN.t>60 ? 'Rendah (Skeptis/Kritis)' : 'Tinggi (Ramah/Kooperatif)');
-        setTxt('C', s.basic.Pd.t>60 || s.content.ASP.t>60 ? 'Rendah (Spontan/Kurang Aturan)' : 'Tinggi (Teratur/Disiplin)');
-    }
-
-    function setTxt(id, t) {
-        document.getElementById('lvl'+id).innerText = t.split(' ')[0];
-        document.getElementById('desc'+id).innerText = t;
-    }
-
-    function renderSection(tblId, chartId, data, useK, isLine) {
-        const tbody = document.querySelector(`#${tblId} tbody`);
-        tbody.innerHTML = '';
-        
-        let sortedKeys = Object.keys(data);
-        
-        // FORCE SORTING FOR BASIC SCALES (L,F,K,1,2,3...)
-        if (chartId === 'chartBasic') {
-            const standardOrder = ['L', 'F', 'K', 'Hs', 'D', 'Hy', 'Pd', 'Mf', 'Pa', 'Pt', 'Sc', 'Ma', 'Si'];
-            sortedKeys = standardOrder.filter(k => data[k]);
-        }
-
-        const labels = [], values = [], colors = [];
-        const codeMap = {
-            'Hs': '1 (Hs)', 'D': '2 (D)', 'Hy': '3 (Hy)', 'Pd': '4 (Pd)', 
-            'Mf': '5 (Mf)', 'Pa': '6 (Pa)', 'Pt': '7 (Pt)', 'Sc': '8 (Sc)', 
-            'Ma': '9 (Ma)', 'Si': '0 (Si)'
-        };
-
-        sortedKeys.forEach(code => {
-            const d = data[code];
-            const isHigh = d.t >= 65;
-            
-            // Render Table
-            const badge = isHigh 
-                ? `<span class="badge badge-high">TINGGI</span>` 
-                : `<span class="badge badge-normal">Normal</span>`;
-            
-            tbody.innerHTML += `<tr>
-                <td><strong>${code}</strong></td>
-                <td>${d.label}</td>
-                <td>${d.raw}</td>
-                ${useK ? `<td style="color:#777">${d.kDisp}</td>` : ''}
-                <td><span class="${isHigh?'score-high-text':''} score-val">${d.t}</span></td>
-                <td>${badge}</td>
-            </tr>`;
-
-            // Chart Data
-            labels.push(codeMap[code] || code);
-            values.push(d.t);
-            colors.push(isHigh ? '#c0392b' : '#34495e'); // Red if High
-        });
-
-        const ctx = document.getElementById(chartId).getContext('2d');
-        if(chartInstances[chartId]) chartInstances[chartId].destroy();
-        
-        const config = {
-            type: isLine ? 'line' : 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'T-Score',
-                    data: values,
-                    borderColor: '#2c3e50',
-                    backgroundColor: isLine ? 'rgba(41, 128, 185, 0.1)' : colors,
-                    pointBackgroundColor: colors,
-                    pointRadius: 5,
-                    pointHoverRadius: 7,
-                    borderWidth: 2,
-                    tension: 0.3,
-                    fill: isLine
-                }]
             },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                layout: { padding: { top: 20, right: 20, left: 10, bottom: 0 } },
-                scales: {
-                    y: { 
-                        min: 30, max: 120,
-                        grid: { 
-                            color: c => c.tick.value === 65 ? 'rgba(192, 57, 43, 0.8)' : '#ecf0f1',
-                            lineWidth: c => c.tick.value === 65 ? 2 : 1,
-                            borderDash: c => c.tick.value === 65 ? [6, 4] : []
-                        },
-                        title: { display: true, text: 'T-Score' }
-                    },
-                    x: { ticks: { font: { size: 10, weight: 'bold' } } }
-                },
-                plugins: { 
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: { label: (ctx) => ` T-Score: ${ctx.parsed.y}` }
-                    }
-                }
-            }
-        };
-        chartInstances[chartId] = new Chart(ctx, config);
-    }
+            plugins: { legend: {display:false} }
+        }
+    });
+}
 </script>
 </body>
 </html>

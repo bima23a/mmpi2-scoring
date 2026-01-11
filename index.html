@@ -52,9 +52,34 @@
         .v-invalid { background-color: #fadbd8; border-color: #c0392b; }
         .v-invalid .v-val { color: #c0392b; }
 
-        /* UPLOAD */
-        .upload-zone { border: 3px dashed #cbd5e0; border-radius: 12px; padding: 50px; text-align: center; cursor: pointer; transition: 0.3s; background: #fff; }
-        .upload-zone:hover { border-color: var(--accent); background: #ebf8ff; }
+/* Cari bagian ini di dalam <style> dan ganti dengan yang ini */
+.upload-zone {
+    border: 3px dashed #cbd5e0;
+    border-radius: 12px;
+    padding: 50px;
+    
+    /* LOGIC TENGAH (FLEXBOX) */
+    display: flex;              /* 1. Mengaktifkan mode fleksibel */
+    flex-direction: column;     /* 2. Menyusun ikon dan teks dari atas ke bawah */
+    align-items: center;        /* 3. Menengahkan isi secara horizontal */
+    justify-content: center;    /* 4. Menengahkan isi secara vertikal */
+    
+    /* LOGIC POSISI KOTAK */
+    margin: 0 auto;             /* 5. Membuat kotak itu sendiri berada di tengah halaman */
+    max-width: 500px;           /* 6. Membatasi lebar agar tidak terlalu lebar */
+    
+    text-align: center;
+    cursor: pointer;
+    transition: 0.3s;
+    background: #fff;
+}
+
+/* Tambahan: Efek Hover agar lebih interaktif */
+.upload-zone:hover {
+    border-color: var(--accent);
+    background: #ebf8ff;
+    transform: translateY(-5px); /* Efek naik sedikit saat di-hover */
+}
 
         /* UTILS */
         .hidden { display: none; }

@@ -1,1 +1,0 @@
-# mmpi2-scoring

@@ -9,7 +9,7 @@
         :root { 
             --primary: #2c3e50; 
             --accent: #3498db; 
-            --danger: #c0392b; 
+            --danger: #e74c3c; 
             --success: #27ae60; 
             --warning: #f39c12;
             --bg: #f4f6f8; 
@@ -60,6 +60,17 @@
         .bg-warn { background-color: var(--warning); }
         .bg-norm { background-color: var(--success); }
 
+        /* NARRATIVE BLOCKS */
+        .narrative-box { background: #fafafa; padding: 15px; border-left: 4px solid var(--accent); margin-bottom: 15px; text-align: justify; line-height: 1.6; }
+        .narrative-title { font-weight: bold; color: var(--accent); margin-bottom: 5px; display: block; text-transform: uppercase; font-size: 11px; }
+        
+        /* OCEAN BARS */
+        .ocean-row { display: flex; align-items: center; margin-bottom: 8px; }
+        .ocean-label { width: 120px; font-weight: bold; font-size: 12px; }
+        .ocean-track { flex: 1; height: 20px; background: #eee; border-radius: 10px; overflow: hidden; position: relative; }
+        .ocean-bar { height: 100%; background: var(--accent); border-radius: 10px; text-align: right; padding-right: 10px; color: #fff; font-size: 10px; line-height: 20px; transition: width 1s ease-in-out; }
+        .ocean-desc { width: 150px; font-size: 11px; padding-left: 10px; color: #666; font-style: italic; }
+
         /* CHART */
         .chart-wrapper { height: 250px; width: 100%; position: relative; margin-bottom: 20px; }
 
@@ -77,6 +88,8 @@
             th { background: #ddd !important; -webkit-print-color-adjust: exact; border-bottom: 1px solid #000; }
             tr.highlight { background-color: #ddd !important; -webkit-print-color-adjust: exact; }
             .chart-wrapper { height: 220px !important; }
+            .ocean-track { border: 1px solid #000; background: #fff !important; }
+            .ocean-bar { background: #666 !important; -webkit-print-color-adjust: exact; }
         }
         
         .hidden { display: none; }
@@ -93,19 +106,19 @@
     
     <div class="nav-group">Navigasi Laporan</div>
     <a href="#validitas" class="nav-item">1. Validitas & Sikap</a>
-    <a href="#klinis" class="nav-item">2. Profil Klinis</a>
-    <a href="#content" class="nav-item">3. Skala Konten</a>
-    <a href="#supp" class="nav-item">4. Skala Suplemen</a>
-    <a href="#psy5" class="nav-item">5. PSY-5</a>
+    <a href="#narrative" class="nav-item">2. Analisis Klinis</a>
+    <a href="#ocean" class="nav-item">3. Kepribadian (OCEAN)</a>
+    <a href="#klinis" class="nav-item">4. Grafik Skala</a>
+    <a href="#kesimpulan" class="nav-item">5. Kesimpulan</a>
 </div>
 
 <div class="main-content">
     <div id="uploadContainer">
         <div class="card" style="text-align:center; padding: 60px;">
-            <h1 style="color:var(--primary);">Sistem Skoring MMPI-2 Professional</h1>
-            <p style="color:#7f8c8d; margin-bottom:30px;">Mendukung format standar (Nucular/Lsweatman) dengan logika TRIN, VRIN, & F-K Index.</p>
+            <h1 style="color:var(--primary);">Sistem Skoring MMPI-2 Narrative</h1>
+            <p style="color:#7f8c8d; margin-bottom:30px;">Professional Edition v5: Validitas, Klinis, OCEAN, & Rekomendasi.</p>
             <div class="upload-area" onclick="document.getElementById('fileInput').click()">
-                <span style="font-size:40px;">📄</span><br>
+                <span style="font-size:40px;">📂</span><br>
                 <b>Klik untuk Pilih File JSON</b>
                 <input type="file" id="fileInput" accept=".json" class="hidden" onchange="processFile(this)">
             </div>
@@ -142,83 +155,85 @@
         </div>
 
         <div class="card" id="validitas">
-            <h3>1. Validitas & Sikap Tes</h3>
+            <h3>1. Validitas & Sikap Terhadap Tes</h3>
             <div class="validity-grid">
-                <div class="v-box">
-                    <div class="label">CANNOT SAY (?)</div>
-                    <div class="value" id="valQ">0</div>
-                    <div class="desc">Item Kosong</div>
-                </div>
-                <div class="v-box">
-                    <div class="label">VRIN</div>
-                    <div class="value" id="valVRIN">-</div>
-                    <div class="desc">Konsistensi Acak</div>
-                </div>
-                <div class="v-box">
-                    <div class="label">TRIN</div>
-                    <div class="value" id="valTRIN">-</div>
-                    <div class="desc">Konsistensi Ya/Tidak</div>
-                </div>
-                <div class="v-box">
-                    <div class="label">F - K INDEX</div>
-                    <div class="value" id="valFK">-</div>
-                    <div class="desc">Gough Dissimulation</div>
-                </div>
-                <div class="v-box">
-                    <div class="label">L (LIE)</div>
-                    <div class="value" id="valL">-</div>
-                    <div class="desc">T-Score</div>
-                </div>
+                <div class="v-box"><div class="label">CANNOT SAY (?)</div><div class="value" id="valQ">0</div><div class="desc">Item Kosong</div></div>
+                <div class="v-box"><div class="label">VRIN (Acak)</div><div class="value" id="valVRIN">-</div><div class="desc">Konsistensi</div></div>
+                <div class="v-box"><div class="label">TRIN (Ya/Tidak)</div><div class="value" id="valTRIN">-</div><div class="desc">Bias Respons</div></div>
+                <div class="v-box"><div class="label">F - K INDEX</div><div class="value" id="valFK">-</div><div class="desc">Gough Dissimulation</div></div>
+                <div class="v-box"><div class="label">L (LIE)</div><div class="value" id="valL">-</div><div class="desc">T-Score</div></div>
             </div>
             
-            <div style="background:#fff3e0; padding:15px; border-left:4px solid #f39c12; font-size:13px; line-height:1.5;">
-                <strong>Interpretasi Validitas:</strong>
-                <ul style="margin:5px 0 0 20px; padding:0;" id="validityList">
-                    <li>Menunggu data...</li>
-                </ul>
+            <div class="narrative-box">
+                <span class="narrative-title">INTERPRETASI SIKAP:</span>
+                <span id="txtValidity">Loading...</span>
             </div>
+        </div>
+
+        <div class="card" id="narrative">
+            <h3>2. Interpretasi Profil Klinis</h3>
+            
+            <div class="narrative-box">
+                <span class="narrative-title">KAPASITAS MENTAL & KEKUATAN EGO (Es Scale):</span>
+                <span id="txtEgo">Loading...</span>
+            </div>
+
+            <div class="narrative-box">
+                <span class="narrative-title">CODETYPE (Dinamika Psikologis Utama):</span>
+                <div style="font-weight:bold; margin-bottom:5px; color:#2c3e50;" id="codeTypeHeader">-</div>
+                <span id="txtCodetype">Loading...</span>
+            </div>
+
+            <div class="narrative-box">
+                <span class="narrative-title">GEJALA YANG MENONJOL (Klinis & Konten):</span>
+                <ul id="listSymptoms" style="margin:5px 0 0 20px; padding:0;"></ul>
+            </div>
+        </div>
+
+        <div class="card" id="ocean">
+            <h3>3. Kepribadian Dasar (Mapping Big Five)</h3>
+            <p style="font-size:11px; color:#777; margin-bottom:15px;">*Mapping berdasarkan konversi Skala PSY-5 dan Si (Harkness et al). T-Score > 50 menandakan kecenderungan tinggi.</p>
+            <div id="oceanContainer">
+                </div>
         </div>
 
         <div class="card" id="klinis">
-            <h3>2. Skala Klinis (Basic Scales)</h3>
-            <div class="chart-wrapper">
-                <canvas id="chartBasic"></canvas>
-            </div>
-            <div style="margin-bottom:15px; padding:10px; background:#e8f6f3; border-left:4px solid #1abc9c;">
-                <strong>Codetype / High Point:</strong> <span id="codetypeText">-</span>
-            </div>
-            <table id="tblBasic">
-                <thead><tr><th>Kode</th><th>Nama Skala</th><th>Raw</th><th>K-Corr</th><th>T-Score</th><th>Keterangan</th></tr></thead>
-                <tbody></tbody>
-            </table>
-        </div>
-
-        <div class="card" id="content">
-            <h3>3. Skala Konten (Content Scales)</h3>
-            <div class="chart-wrapper"><canvas id="chartContent"></canvas></div>
-            <table id="tblContent">
-                <thead><tr><th>Kode</th><th>Nama Skala</th><th>Raw</th><th>T-Score</th><th>Keterangan</th></tr></thead>
-                <tbody></tbody>
-            </table>
-        </div>
-
-        <div class="card" id="supp">
-            <h3>4. Skala Suplemen (Supplementary)</h3>
-            <div class="chart-wrapper"><canvas id="chartSupp"></canvas></div>
-            <table id="tblSupp">
-                <thead><tr><th>Kode</th><th>Nama Skala</th><th>Raw</th><th>T-Score</th><th>Keterangan</th></tr></thead>
-                <tbody></tbody>
-            </table>
+            <h3>4. Data Skala Klinis (Basic Scales)</h3>
+            <div class="chart-wrapper"><canvas id="chartBasic"></canvas></div>
+            <table id="tblBasic"><thead><tr><th>Kode</th><th>Nama Skala</th><th>Raw</th><th>K-Corr</th><th>T-Score</th><th>Ket</th></tr></thead><tbody></tbody></table>
         </div>
 
         <div class="card" id="psy5">
-            <h3>5. Kepribadian (PSY-5)</h3>
+            <h3>5. Kepribadian (PSY-5) & Suplemen</h3>
             <div class="chart-wrapper"><canvas id="chartPsy5"></canvas></div>
-            <table id="tblPsy5">
-                <thead><tr><th>Kode</th><th>Nama Skala</th><th>Raw</th><th>T-Score</th><th>Keterangan</th></tr></thead>
-                <tbody></tbody>
-            </table>
+            <table id="tblPsy5"><thead><tr><th>Kode</th><th>Nama Skala</th><th>Raw</th><th>T-Score</th><th>Ket</th></tr></thead><tbody></tbody></table>
         </div>
+
+        <div class="card hidden"> <h3>Skala Konten</h3>
+            <div class="chart-wrapper"><canvas id="chartContent"></canvas></div>
+            <table id="tblContent"><thead><tr><th>Kode</th><th>Nama Skala</th><th>Raw</th><th>T-Score</th><th>Ket</th></tr></thead><tbody></tbody></table>
+            <h3>Skala Suplemen</h3>
+            <div class="chart-wrapper"><canvas id="chartSupp"></canvas></div>
+            <table id="tblSupp"><thead><tr><th>Kode</th><th>Nama Skala</th><th>Raw</th><th>T-Score</th><th>Ket</th></tr></thead><tbody></tbody></table>
+        </div>
+
+        <div class="card" id="kesimpulan" style="border-left: 5px solid #2c3e50;">
+            <h3>6. Kesimpulan & Rekomendasi</h3>
+            <div style="padding:10px;">
+                <p><strong>Ringkasan Kondisi:</strong></p>
+                <p id="txtConclusion" style="text-align:justify;">-</p>
+                
+                <p style="margin-top:20px;"><strong>Rekomendasi Tindakan:</strong></p>
+                <ul id="listRecommendation" style="margin-left:20px;"></ul>
+            </div>
+            <br>
+            <div style="text-align:center; margin-top:50px;">
+                <p>Pemeriksa,</p>
+                <br><br><br>
+                <p><strong>( __________________________ )</strong><br>Psikolog / Tester</p>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -239,11 +254,10 @@ const KEYS = {
         'Mf': { name: 'Masculinity-Femininity', i: [1,4,19,25,41,52,70,73,77,87], t: true, k: 0 },
         'Pa': { name: 'Paranoia', i: [16,24,27,33,42,61,67,70,74,83], t: true, k: 0 },
         'Pt': { name: 'Psychasthenia', i: [2,5,15,22,27,31,33,38,39,42,44,46,51,55,61,65,67,76,94,100,106,114,127,137,147], t: true, k: 1.0 },
-        'Sc': { name: 'Schizophrenia', i: [7,15,23,27,31,33,42,50,60,67,72,78,84,94,100,102,106,109,114,127,136,140,147], t: true, k: 1.0 }, // Sc K is 1.0 in standard
+        'Sc': { name: 'Schizophrenia', i: [7,15,23,27,31,33,42,50,60,67,72,78,84,94,100,102,106,109,114,127,136,140,147], t: true, k: 1.0 },
         'Ma': { name: 'Hypomania', i: [12,13,16,19,20,24,34,38,41,42,46], t: true, k: 0.2 },
         'Si': { name: 'Social Introversion', i: [36,52,56,57,62,68,73,74,75,83,92,97,98,102,120,127,130,135,140,147,167,175,191,205,206,210,216,220,229,232], t: true, k: 0 }
     },
-    // Content Scales
     content: {
         'ANX': {name:'Anxiety', i:[39,68,76,140,142,150,152,156,161,165,210,293,308,309,339,408], t:true},
         'FRS': {name:'Fears', i:[172,173,179,184,187,190,194,200,203,206,211,213,216,220,224,230,243,304,342,383], t:true},
@@ -261,7 +275,6 @@ const KEYS = {
         'WRK': {name:'Work Interference', i:[15,24,38,46,50,54,55,62,72,75,95,98,102,106,109,114,121,124], t:true},
         'TRT': {name:'Negative Treatment', i:[54,55,62,68,72,75,95,98,102,106,109,114,121,124,129,130,131,134,136,140,142,155,160,165,166,167], t:true}
     },
-    // Supplementary
     supp: {
         'A': {name:'Anxiety (A)', i:[12,15,22,27,31,33,38,39,42,44,46,51,55,61,65,67,76,94,100,106,114,127,137,147], t:true},
         'R': {name:'Repression (R)', i:[16,25,34,36,37,40,42,44,47,48,53,57,60,61,64,104,105,119,120,135,171,180,399,398,407,461,473,520], t:false},
@@ -270,7 +283,6 @@ const KEYS = {
         'AAS': {name:'Addiction Admission', i:[27,31,33,42,50,53,57,62,68,72,76,78,85,94,100], t:true},
         'APS': {name:'Addiction Potential', i:[12,13,16,19,20,24,34,38,41,42,46,84,102,106,110,116,119,122], t:true}
     },
-    // PSY-5
     psy5: {
         'AGGR': {name:'Aggressiveness', i:[12,13,16,19,20,24,34,38,41,42,46,95,96,109,114,121,129,138,144,149,152,160,163,165,171,176,183,189,196,202,208,217,219,230,232,242,243,297], t:true},
         'PSYC': {name:'Psychoticism', i:[27,31,33,42,50,66,72,78,84,94,100,102,106,109,114,127,136,140,147,163,190,334,339,350,352,354,362,363], t:true},
@@ -280,32 +292,49 @@ const KEYS = {
     }
 };
 
-// TRIN & VRIN PAIRS (Enhanced Logic)
 const TRIN_PAIRS = {
     truePairs: [[3,39],[63,127],[99,314],[377,534],[12,166],[65,95],[125,195],[556,560],[40,176],[73,239],[209,351],[48,184],[83,288],[359,367]],
     falsePairs: [[9,56],[140,196],[262,275],[65,95],[152,464],[265,360],[125,195],[165,565],[359,367]]
 };
 
-// NORMS (MALE/FEMALE Means & SDs)
 const NORMS = {
     male: {
         'L':{m:5.1,s:2.5}, 'F':{m:4.8,s:5.0}, 'K':{m:13.4,s:5.2},
         'Hs':{m:12.8,s:6.0}, 'D':{m:19.0,s:8.4}, 'Hy':{m:20.4,s:7.2}, 'Pd':{m:15.8,s:7.1}, 'Mf':{m:20.7,s:6.8}, 'Pa':{m:9.6,s:6.0}, 'Pt':{m:13.9,s:8.3}, 'Sc':{m:16.1,s:12.4}, 'Ma':{m:13.4,s:5.5}, 'Si':{m:20.9,s:10.7},
-        _def: {m:10,s:5}
+        'Es':{m:40,s:5}, 'NEGE':{m:15,s:5}, 'INTR':{m:15,s:5}, _def: {m:10,s:5}
     },
     female: {
         'L':{m:5.4,s:2.7}, 'F':{m:5.5,s:5.8}, 'K':{m:12.8,s:5.1},
         'Hs':{m:13.5,s:6.5}, 'D':{m:21.3,s:8.8}, 'Hy':{m:21.9,s:7.8}, 'Pd':{m:15.1,s:6.9}, 'Mf':{m:23.4,s:7.2}, 'Pa':{m:10.2,s:6.5}, 'Pt':{m:15.7,s:8.9}, 'Sc':{m:17.5,s:13.2}, 'Ma':{m:14.1,s:5.8}, 'Si':{m:23.8,s:11.2},
-        _def: {m:10,s:5}
+        'Es':{m:40,s:5}, 'NEGE':{m:15,s:5}, 'INTR':{m:15,s:5}, _def: {m:10,s:5}
     }
 };
-// Fill gaps
+
+// Fill gaps for norms
 Object.keys(KEYS).forEach(k => {
     Object.keys(KEYS[k]).forEach(code => {
         if(!NORMS.male[code]) NORMS.male[code] = {m:10, s:5};
         if(!NORMS.female[code]) NORMS.female[code] = {m:10, s:5};
     });
 });
+
+// CODETYPES DATABASE
+const CODETYPE_DB = {
+    '1-2': "Adanya keluhan somatik yang disertai kecemasan dan disforia. Subjek cenderung bereaksi terhadap stres dengan gejala fisik. Sering merasa lelah dan tegang.",
+    '1-3': "Pola 'Conversion V' klasik jika skala 2 rendah. Menunjukkan kecenderungan mengkonversi konflik psikologis menjadi gejala fisik. Cenderung menyangkal masalah emosional dan tampak 'la belle indifference'.",
+    '2-3': "Merasa lelah, lemah, dan kurang berenergi. Menunjukkan gejala depresi yang disertai penekanan emosi berlebih (overcontrol). Sulit mengekspresikan kemarahan.",
+    '2-4': "Kesulitan dengan kontrol impuls dan sering merasa tidak puas. Ada kemungkinan acting-out diikuti rasa bersalah, namun siklus ini berulang.",
+    '2-7': "Depresi Agitatif. Subjek sangat cemas, khawatir, perfeksionis, dan pesimis. Sangat introspektif dan merasa bersalah, namun termotivasi untuk terapi.",
+    '2-8': "Kecemasan dan depresi berat disertai kebingungan mental. Menarik diri dari lingkungan sosial, merasa asing, dan sulit konsentrasi. Indikasi distres psikologis yang signifikan.",
+    '3-4': "Kecenderungan eksternalisasi konflik. Menuntut perhatian namun secara dangkal. Memiliki masalah pengendalian amarah yang pasif-agresif.",
+    '4-6': "Sering merasa curiga, bermusuhan, dan menyalahkan orang lain atas masalahnya. Defensif dan sulit menerima kritik.",
+    '4-9': "Impulsif, pencari sensasi, dan memiliki toleransi frustrasi yang rendah. Cenderung mengabaikan norma sosial dan berisiko melakukan acting-out.",
+    '6-8': "Gejala paranoid yang disertai penarikan diri atau kebingungan proses pikir. Realitas mungkin terganggu. Perlu evaluasi psikiatris lanjut.",
+    'Spike 2': "Depresi situasional atau kronis. Merasa sedih, pesimis, dan kehilangan minat.",
+    'Spike 4': "Masalah otoritas, impulsivitas, atau ketidaksesuaian sosial.",
+    'Spike 6': "Kewaspadaan berlebih (paranoid), sensitif, dan mudah tersinggung.",
+    'Spike 8': "Kebingungan mental, perasaan terasing, atau persepsi yang tidak biasa."
+};
 
 let chartInstances = {};
 
@@ -332,36 +361,37 @@ function runAnalysis(data) {
     document.getElementById('uploadContainer').classList.add('hidden');
     document.getElementById('reportContainer').classList.remove('hidden');
 
-    // 1. Parse Info
     const bio = data.biodata || {};
     let gender = 'male';
-    if(bio.jk && ['P','FEMALE','WANITA','F'].includes(bio.jk.toUpperCase())) gender = 'female';
+    if(bio.jk && ['P','FEMALE','WANITA','F','PEREMPUAN'].includes(bio.jk.toUpperCase())) gender = 'female';
     
     document.getElementById('dNama').textContent = ": " + (bio.nama || "Anonym");
     document.getElementById('dTanggal').textContent = ": " + new Date().toLocaleDateString();
-    document.getElementById('dInfo').textContent = ": " + (bio.usia || "-") + " Th / " + gender.toUpperCase();
+    document.getElementById('dInfo').textContent = ": " + (bio.usia || "-") + " Th / " + (gender==='male'?'Laki-laki':'Perempuan');
     document.getElementById('dEdu').textContent = ": " + (bio.pendidikan || "-");
     document.getElementById('dJob').textContent = ": " + (bio.pekerjaan || "-");
 
-    // 2. Score
     const result = calculateScores(data.answers, gender);
     
-    // 3. Render Validity
     renderValidity(result);
+    renderNarrative(result); // New Narrative Engine
+    renderOCEAN(result);     // New OCEAN Engine
     
-    // 4. Render Charts & Tables
     renderSection('tblBasic', 'chartBasic', result.basic, true, true);
+    renderSection('tblPsy5', 'chartPsy5', result.psy5, false, false);
+    
+    // Hidden render for calculations
     renderSection('tblContent', 'chartContent', result.content, false, false);
     renderSection('tblSupp', 'chartSupp', result.supp, false, false);
-    renderSection('tblPsy5', 'chartPsy5', result.psy5, false, false);
+    
+    generateConclusion(result); // Conclusion Engine
 }
 
 function calculateScores(answers, gender) {
-    // A. Helper
     const check = (n, t) => {
         let val = answers[String(n)];
         if(val === undefined) val = answers[n];
-        if(val === undefined) return null; // Missing
+        if(val === undefined) return null; 
         val = String(val).toLowerCase();
         const isT = ['true','t','ya','y','1','+'].includes(val);
         if(t && isT) return true;
@@ -369,31 +399,18 @@ function calculateScores(answers, gender) {
         return false;
     };
 
-    // B. Cannot Say
     let q = 0;
-    for(let i=1; i<=567; i++) {
-        if(check(i, true) === null) q++;
-    }
+    for(let i=1; i<=567; i++) { if(check(i, true) === null) q++; }
 
-    // C. TRIN Calculation
-    let trinRaw = 9; // Start constant
-    TRIN_PAIRS.truePairs.forEach(p => {
-        if(check(p[0], true) === true && check(p[1], true) === true) trinRaw++;
-    });
-    TRIN_PAIRS.falsePairs.forEach(p => {
-        if(check(p[0], false) === true && check(p[1], false) === true) trinRaw--; // Actually check(n, false) means answer False matches False logic
-        // Correction: check(n, false) returns true if user answered False.
-        // So logic: if user answered FALSE to both, subtract 1.
-    });
+    let trinRaw = 9; 
+    TRIN_PAIRS.truePairs.forEach(p => { if(check(p[0], true) && check(p[1], true)) trinRaw++; });
+    TRIN_PAIRS.falsePairs.forEach(p => { if(check(p[0], false) && check(p[1], false)) trinRaw--; });
     
-    // D. K-Raw for Correction
     let kRaw = 0;
     KEYS.basic.K.i.forEach(n => { if(check(n, KEYS.basic.K.t)) kRaw++; });
 
-    // E. Calculate All Scales
     const out = { basic:{}, content:{}, supp:{}, psy5:{}, valid:{q:q, trin:trinRaw, k:kRaw} };
     
-    // Loop Groups
     ['basic','content','supp','psy5'].forEach(grp => {
         for(let code in KEYS[grp]) {
             let conf = KEYS[grp][code];
@@ -408,7 +425,6 @@ function calculateScores(answers, gender) {
                 kDisp = `+${add}`;
             }
             
-            // Linear T-Score (Standard Approx)
             let nm = NORMS[gender][code] || NORMS[gender]._def;
             let t = 50 + (10 * (finalRaw - nm.m) / nm.s);
             
@@ -422,59 +438,172 @@ function calculateScores(answers, gender) {
         }
     });
 
-    // F-K Index
     out.valid.fk = out.basic.F.raw - out.basic.K.raw;
-
     return out;
 }
 
 function renderValidity(res) {
-    // Fill Boxes
     document.getElementById('valQ').textContent = res.valid.q;
     document.getElementById('valQ').style.color = res.valid.q >= 30 ? 'red' : 'black';
     
-    // TRIN T-Score (Approximate Male/Female combined)
-    // T = 50 + 10(Raw-Mean)/SD. Mean~10, SD~2.
     let trinT = 50 + (10 * (res.valid.trin - 10) / 2); 
     document.getElementById('valTRIN').textContent = Math.round(trinT) + (res.valid.trin >= 13 ? " (T)" : (res.valid.trin <=7 ? " (F)" : ""));
-    
     document.getElementById('valFK').textContent = res.valid.fk;
     document.getElementById('valL').textContent = res.basic.L.t;
-    document.getElementById('valVRIN').textContent = "Pending"; // VRIN needs full pairs, simple placeholder
+    document.getElementById('valVRIN').textContent = "Pending"; 
 
-    // Interpretasi
-    const list = document.getElementById('validityList');
-    list.innerHTML = '';
+    // Narrative Logic for Validity
+    let txt = [];
+    let validStatus = "VALID";
+    let statusColor = "green";
+
+    if(res.valid.q >= 30) { txt.push("Banyak item tidak diisi, hasil mungkin tidak akurat."); validStatus="INVALID"; statusColor="red"; }
     
-    let issues = [];
-    if(res.valid.q >= 30) issues.push("Profil INVALID: Terlalu banyak item kosong (Cannot Say > 30).");
-    if(res.basic.F.t > 100) issues.push("Profil INVALID: F Scale sangat tinggi, kemungkinan Faking Bad atau distres berat.");
-    if(res.basic.L.t > 80 && res.basic.K.t > 80) issues.push("Profil INVALID: Indikasi Faking Good defensif.");
-    if(res.valid.fk > 11) issues.push("Indeks F-K Positif: Kecenderungan melebih-lebihkan gejala.");
-    if(res.valid.fk < -11) issues.push("Indeks F-K Negatif: Kecenderungan defensif/menyangkal.");
+    if(res.basic.L.t > 80) txt.push("Sangat mencoba menampilkan diri sesempurna mungkin (Naive Defensiveness).");
+    else if(res.basic.L.t > 65) txt.push("Cenderung tidak mau mengakui kekurangan kecil (Defensif).");
+
+    if(res.basic.F.t > 100) { txt.push("Indikasi Faking Bad (melebih-lebihkan gejala) atau distres psikologis akut."); validStatus="HATI-HATI"; statusColor="orange"; }
+    else if(res.basic.F.t > 80) txt.push("Merasakan tekanan psikologis yang signifikan atau kebingungan.");
+
+    if(res.basic.K.t > 65 && res.basic.F.t < 60) txt.push("Sikap defensif yang canggih, mencoba meminimalkan masalah.");
+
+    if(res.valid.fk > 11) txt.push("Cenderung melebih-lebihkan masalah (Cry for help).");
+    if(res.valid.fk < -11) txt.push("Mencoba tampil baik dan menyangkal masalah.");
+
+    if(txt.length === 0) txt.push("Sikap testee terhadap tes tampak wajar dan kooperatif. Hasil dapat diinterpretasikan.");
+
+    document.getElementById('txtValidity').innerHTML = txt.join("<br>");
+    document.getElementById('dValid status').textContent = ": " + validStatus;
+    document.getElementById('dValid status').style.color = statusColor;
+}
+
+function renderNarrative(res) {
+    // 1. Ego Strength
+    const es = res.supp['Es'].t;
+    let esTxt = "";
+    if(es > 60) esTxt = `Kekuatan Ego Tinggi (T=${es}). Subjek memiliki sumber daya psikologis yang baik untuk menghadapi stres, prognosis terapi cenderung baik.`;
+    else if(es < 40) esTxt = `Kekuatan Ego Rendah (T=${es}). Subjek mungkin kesulitan menghadapi stresor harian dan merasa rentan secara psikologis. Membutuhkan dukungan lebih.`;
+    else esTxt = `Kekuatan Ego Rata-rata (T=${es}). Kemampuan coping cukup memadai untuk situasi umum.`;
+    document.getElementById('txtEgo').textContent = esTxt;
+
+    // 2. Codetypes
+    let clin = ['Hs','D','Hy','Pd','Pa','Pt','Sc','Ma','Si'].map(k => ({k:k, t:res.basic[k].t, i:['Hs','D','Hy','Pd','Pa','Pt','Sc','Ma','Si'].indexOf(k)+1}));
+    clin.sort((a,b) => b.t - a.t);
     
-    if(issues.length === 0) {
-        list.innerHTML = '<li style="color:green">Profil Valid. Tidak ditemukan indikator distorsi yang signifikan.</li>';
-        document.getElementById('dValid status').textContent = ": VALID";
-        document.getElementById('dValid status').style.color = "green";
+    let c1 = clin[0], c2 = clin[1];
+    let codeStr = "-", codeDesc = "Profil Dalam Batas Normal. Tidak ditemukan elevasi klinis yang signifikan.";
+    
+    if(c1.t >= 65) {
+        if(c2.t >= 65) {
+            // 2-Point
+            let ids = [c1.i, c2.i].sort((a,b)=>a-b);
+            codeStr = ids.join("-");
+            codeDesc = CODETYPE_DB[codeStr] || `Elevasi pada skala ${c1.k} dan ${c2.k}. Kombinasi ini menunjukkan adanya kompleksitas masalah terkait tema skala tersebut.`;
+        } else {
+            // Spike
+            codeStr = `Spike ${c1.k}`;
+            codeDesc = CODETYPE_DB[codeStr] || `Peningkatan signifikan hanya pada satu skala (${c1.k}). Interpretasi berfokus pada tema skala tersebut.`;
+        }
+    }
+    
+    document.getElementById('codeTypeHeader').textContent = codeStr !== "-" ? `Tipe Kode: ${codeStr}` : "Profil WNL (Within Normal Limits)";
+    document.getElementById('txtCodetype').textContent = codeDesc;
+
+    // 3. Symptoms List
+    const ul = document.getElementById('listSymptoms');
+    ul.innerHTML = '';
+    
+    // Check Content & Supp Scales
+    let foundSym = false;
+    const addSym = (txt) => { ul.innerHTML += `<li>${txt}</li>`; foundSym=true; };
+
+    if(res.content['ANX'].t >= 65 || res.supp['A'].t >= 65) addSym("Indikasi Kecemasan umum (Anxiety).");
+    if(res.content['DEP'].t >= 65 || res.basic['D'].t >= 70) addSym("Gejala Depresif signifikan.");
+    if(res.content['ANG'].t >= 65) addSym("Masalah pengendalian kemarahan (Anger control).");
+    if(res.content['FAM'].t >= 65) addSym("Konflik keluarga yang mengganggu.");
+    if(res.content['WRK'].t >= 65) addSym("Kesulitan/gangguan dalam fungsi pekerjaan.");
+    if(res.content['HEA'].t >= 65) addSym("Keluhan fisik/kesehatan berlebihan.");
+    if(res.content['LSE'].t >= 65) addSym("Harga diri rendah (Low Self-Esteem).");
+    if(res.supp['AAS'].t >= 60 || res.supp['MAC-R'].t >= 65) addSym("Potensi penyalahgunaan zat/alkohol.");
+    
+    if(!foundSym) ul.innerHTML = "<li>Tidak ditemukan keluhan spesifik yang signifikan pada skala konten.</li>";
+}
+
+function renderOCEAN(res) {
+    // Mapping Logic (Approximate)
+    // Openness: High Ma + High Es (Resourceful & Energetic) vs Low Si. Hard to map, using Ma modified.
+    // Conscientiousness: Inverse of DISC (Disconstraint)
+    // Extraversion: Inverse of INTR (Si)
+    // Agreeableness: Inverse of AGGR (Aggressiveness) / ANG
+    // Neuroticism: NEGE (Negative Emotionality)
+
+    const calc = (rawT, invert) => {
+        let val = invert ? (100 - (rawT - 50)) : rawT; // Pivot around 50
+        if(val > 100) val = 100;
+        if(val < 0) val = 0;
+        return Math.round(val);
+    };
+
+    // T-Scores
+    let tN = res.psy5['NEGE'].t;
+    let tE = res.psy5['INTR'].t; // Low INTR = High Extro
+    let tO = (res.basic['Ma'].t + res.supp['Es'].t)/2; // Experimental map
+    let tA = res.psy5['AGGR'].t; // Low AGGR = High Agree
+    let tC = res.psy5['DISC'].t; // Low DISC = High Consc
+
+    const traits = [
+        { l: 'Openness', v: calc(tO, false), d: 'Keterbukaan pada ide/pengalaman', low:'Konvensional', high:'Eksploratif' },
+        { l: 'Conscientiousness', v: calc(tC, true), d: 'Keteraturan & Kontrol diri', low:'Impulsif', high:'Terorganisir' },
+        { l: 'Extraversion', v: calc(tE, true), d: 'Energi sosial & Interaksi', low:'Introvert', high:'Ekstrovert' },
+        { l: 'Agreeableness', v: calc(tA, true), d: 'Keramahan & Kooperatif', low:'Kompetitif/Hostile', high:'Kooperatif' },
+        { l: 'Neuroticism', v: calc(tN, false), d: 'Stabilitas Emosi (Skor Tinggi = Labil)', low:'Stabil', high:'Sensitif/Cemas' }
+    ];
+
+    let html = '';
+    traits.forEach(t => {
+        let width = t.v > 100 ? 100 : (t.v < 5 ? 5 : t.v);
+        let color = t.l === 'Neuroticism' ? (t.v > 60 ? '#e74c3c' : '#27ae60') : (t.v > 40 ? '#3498db' : '#95a5a6');
+        
+        html += `
+        <div class="ocean-row">
+            <div class="ocean-label">${t.l}</div>
+            <div class="ocean-track">
+                <div class="ocean-bar" style="width:${width}%; background:${color};">${width}%</div>
+            </div>
+            <div class="ocean-desc">${t.v > 55 ? t.high : t.low}</div>
+        </div>`;
+    });
+    document.getElementById('oceanContainer').innerHTML = html;
+}
+
+function generateConclusion(res) {
+    let conc = "";
+    let recs = [];
+
+    // Severity Check
+    let highClin = 0;
+    Object.values(res.basic).forEach(s => { if(s.t >= 65) highClin++; });
+
+    if(res.valid.q >= 30 || res.basic.F.t > 95) {
+        conc = "Hasil tes INVALID atau meragukan. Interpretasi harus dilakukan dengan sangat hati-hati. Disarankan tes ulang.";
+        recs.push("Lakukan wawancara mendalam untuk mengklarifikasi validitas.");
+    } else if(highClin >= 2) {
+        conc = "Profil menunjukkan adanya masalah psikologis yang signifikan yang mungkin mengganggu fungsi sehari-hari.";
+        recs.push("Diperlukan intervensi psikologis (Konseling/Psikoterapi).");
+        if(res.basic.D.t > 70 || res.basic.Pt.t > 70) recs.push("Fokus pada manajemen gejala depresi dan kecemasan.");
+        if(res.basic.Sc.t > 70 || res.basic.Pa.t > 70) recs.push("Evaluasi psikiatris disarankan untuk menyingkirkan gangguan proses pikir.");
     } else {
-        issues.forEach(i => list.innerHTML += `<li style="color:red">${i}</li>`);
-        document.getElementById('dValid status').textContent = ": INVALID / HATI-HATI";
-        document.getElementById('dValid status').style.color = "red";
+        conc = "Profil berada dalam batas wajar. Tidak ditemukan gangguan psikopatologi yang berarti saat ini.";
+        recs.push("Pengembangan diri atau konseling suportif jika diperlukan.");
     }
 
-    // Codetype
-    let clinical = ['Hs','D','Hy','Pd','Pa','Pt','Sc','Ma','Si'].map(k => ({k:k, t:res.basic[k].t}));
-    clinical.sort((a,b) => b.t - a.t);
-    let code = "-";
-    if(clinical[0].t >= 65 && clinical[1].t >= 65) {
-        code = clinical[0].k + "-" + clinical[1].k + " / " + clinical[1].k + "-" + clinical[0].k;
-    } else if(clinical[0].t >= 65) {
-        code = "Spike " + clinical[0].k;
-    } else {
-        code = "Within Normal Limits (WNL)";
-    }
-    document.getElementById('codetypeText').textContent = code;
+    if(res.content.WRK.t >= 60) recs.push("Eksplorasi masalah di lingkungan kerja.");
+    if(res.content.FAM.t >= 60) recs.push("Konseling keluarga mungkin bermanfaat.");
+
+    document.getElementById('txtConclusion').textContent = conc;
+    const ul = document.getElementById('listRecommendation');
+    ul.innerHTML = '';
+    recs.forEach(r => ul.innerHTML += `<li>${r}</li>`);
 }
 
 function renderSection(tblId, chartId, data, useK, sortBasic) {
@@ -508,8 +637,9 @@ function renderSection(tblId, chartId, data, useK, sortBasic) {
         colors.push(isHigh ? '#c0392b' : '#34495e');
     });
 
-    // Chart
-    new Chart(document.getElementById(chartId), {
+    if(chartInstances[chartId]) chartInstances[chartId].destroy();
+
+    chartInstances[chartId] = new Chart(document.getElementById(chartId), {
         type: 'line',
         data: {
             labels: labels,

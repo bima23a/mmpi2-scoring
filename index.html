@@ -422,12 +422,27 @@ function calcUniformTScore(raw, scale, gender) {
 }
 
 function calc(ans, gender) {
+    const parseAnswer = (v) => {
+        if (v === undefined || v === null) return null;
+        if (typeof v === 'boolean') return v;
+        if (typeof v === 'number') {
+            if (v === 1) return true;
+            if (v === 0) return false;
+            return null;
+        }
+        const s = String(v).trim().toLowerCase();
+        const trueSet = new Set(['true', 't', 'y', 'yes', 'ya', '1', 'benar']);
+        const falseSet = new Set(['false', 'f', 'n', 'no', 'tidak', '0', 'salah']);
+        if (trueSet.has(s)) return true;
+        if (falseSet.has(s)) return false;
+        return null;
+    };
+
     const chk = (n, t) => {
-        let v = ans[n] !== undefined ? ans[n] : (Array.isArray(ans) ? ans[n-1] : undefined);
-        if(v === undefined || v === null) return null;
-        v = String(v).toLowerCase();
-        const b = ['true','t','y','1'].includes(v);
-        return (t && b) || (!t && !b);
+        const v = ans[n] !== undefined ? ans[n] : (Array.isArray(ans) ? ans[n - 1] : undefined);
+        const parsed = parseAnswer(v);
+        if (parsed === null) return null;
+        return t ? parsed === true : parsed === false;
     };
 
     // 1. Validitas
@@ -452,7 +467,8 @@ function calc(ans, gender) {
     // Calc VRIN/TRIN T-Score
     let vNorm = NORMS.vrin[gender];
     let vrinT = Math.round(50 + 10 * (vrinRaw - vNorm.m) / vNorm.s);
-    let trinT = Math.round(50 + 10 * (trinRaw - 10) / 2); // approx SD=2
+    let tNorm = NORMS.trin[gender];
+    let trinT = Math.round(50 + 10 * (trinRaw - tNorm.m) / tNorm.s);
 
     let res = { valid:{q,k,vrinT,trinT}, basic:{}, harris:{}, content:{}, supp:{} };
     
